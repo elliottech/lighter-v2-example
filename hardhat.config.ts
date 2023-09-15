@@ -8,6 +8,11 @@ dotenv.config()
 const config: HardhatUserConfig = {
   solidity: '0.8.18',
   networks: {
+    hardhat: {
+      forking: {
+        url: `https://rpc.goerli.arbitrum.gateway.fm/`,
+      },
+    },
     testnet: {
       url: `https://rpc.goerli.arbitrum.gateway.fm/`,
       accounts: process.env.PRIVATE_KEY ? [process.env.PRIVATE_KEY] : [],
