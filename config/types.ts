@@ -12,6 +12,12 @@ export enum Token {
   WETH = 'WETH',
   USDC = 'USDC',
   WBTC = 'WBTC',
+  aArbWBTC = 'aArbWBTC',
+  aArbWETH = 'aArbWETH',
+  aArbUSDC = 'aArbUSDC',
+  vArbWBTC = 'vArbWBTC',
+  vArbWETH = 'vArbWETH',
+  vArbUSDC = 'vArbUSDC',
 }
 
 export enum ChainId {
@@ -24,10 +30,11 @@ export interface LighterConfig {
   Factory: string
   OrderBooks: OrderBookConfig
   Tokens: TokenConfig
+  VaultAddress: string
 }
 
 export type DeploymentAddresses = {
-  [chainKey in ChainKey]?: LighterConfig
+  [chainId in ChainId]?: LighterConfig
 }
 
 export type OrderBookConfig = {

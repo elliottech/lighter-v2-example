@@ -1,36 +1,34 @@
-import {ChainKey, OrderBookKey, Token} from './types'
+import {ChainId, OrderBookKey, Token} from './types'
 import {addresses} from './lighter-addresses'
+import {network} from 'hardhat'
 
-export const getLighterConfig = (chainKey: ChainKey) => {
-  return addresses[chainKey]
+export const getChainId = async (): Promise<ChainId> => {
+  const chainId = await network.provider.request({method: 'eth_chainId'})
+  const chainIdValue = parseInt(chainId as string)
+  return chainIdValue
 }
 
-export const getRouterAddress = (chainKey: ChainKey): string => {
-  return getLighterConfig(chainKey)?.Router
+export const getLighterConfig = async () => {
+  const chainId = await getChainId()
+  if (!chainId || !ChainId[chainId]) {
+    throw new Error(`ChainId ${chainId} is not supported`)
+  }
+  return getLighterConfigFromChainId(chainId)
 }
 
-export const getFactoryAddress = (chainKey: ChainKey): string => {
-  return getLighterConfig(chainKey)?.Factory
-}
-
-export const getOrderBookAddress = (chainKey: ChainKey, orderBookKey: OrderBookKey): string => {
-  return getLighterConfig(chainKey)?.OrderBooks[orderBookKey] || ''
-}
-
-export const getTokenAddress = (chainKey: ChainKey, tokenKey: Token): string => {
-  return getLighterConfig(chainKey)?.Tokens[tokenKey] || ''
+export const getLighterConfigFromChainId = async (chainId: ChainId) => {
+  return addresses[chainId]
 }
 
 // npx ts-node config/config-helpers.ts
 // export const main = async () => {
-//     const chainKey = ChainKey.ARBITRUM_GOERLI;
-//     const lighterConfig = getLighterConfig(chainKey);
-//     console.log(`lighterConfig for ${chainKey} is: ${JSON.stringify(lighterConfig)}`)
+//   const lighterConfig = await getLighterConfigFromChainId(ChainId.ARBITRUM_GOERLI)
+//   console.log(`lighterConfig is: ${JSON.stringify(lighterConfig)}`)
 // }
 
 // main()
 //   .then(() => process.exit(0))
 //   .catch((error: Error) => {
-//     console.error(error);
-//     process.exit(1);
-//   });
+//     console.error(error)
+//     process.exit(1)
+//   })
