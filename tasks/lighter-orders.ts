@@ -1,5 +1,4 @@
 import {task} from 'hardhat/config'
-import {HardhatRuntimeEnvironment} from 'hardhat/types'
 import {boolean} from 'hardhat/internal/core/params/argumentTypes'
 import {BigNumber} from 'ethers'
 import {OrderBookConfig, OrderBookKey, getLighterConfig, parseBaseAmount, parseBasePrice} from '../config'
