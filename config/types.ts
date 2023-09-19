@@ -1,8 +1,3 @@
-export enum ChainKey {
-  ARBITRUM = 'arbitrum',
-  ARBITRUM_GOERLI = 'arbitrum-goerli',
-}
-
 export enum OrderBookKey {
   WETH_USDC = 'WETH-USDC',
   WBTC_USDC = 'WBTC-USDC',
@@ -21,6 +16,7 @@ export enum Token {
 }
 
 export enum ChainId {
+  HARDHAT = 31337,
   ARBITRUM = 42161,
   ARBITRUM_GOERLI = 421613,
 }
@@ -28,19 +24,7 @@ export enum ChainId {
 export interface LighterConfig {
   Router: string
   Factory: string
-  OrderBooks: OrderBookConfig
-  Tokens: TokenConfig
-  VaultAddress: string
-}
-
-export type DeploymentAddresses = {
-  [chainId in ChainId]?: LighterConfig
-}
-
-export type OrderBookConfig = {
-  [orderBookKey in OrderBookKey]?: string
-}
-
-export type TokenConfig = {
-  [token in Token]?: string
+  OrderBooks: Record<OrderBookKey, string>
+  Tokens: Partial<Record<Token, string>>
+  Vault: Partial<Record<Token, string>>
 }

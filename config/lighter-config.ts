@@ -1,6 +1,7 @@
+import {network} from 'hardhat'
 import {ChainId, LighterConfig, OrderBookKey, Token} from './types'
 
-export const addresses: {
+const lighterConfigs: {
   [ChainId: string]: LighterConfig
 } = {
   [ChainId.ARBITRUM_GOERLI]: {
@@ -15,7 +16,7 @@ export const addresses: {
       [Token.WBTC]: '0xf133eb356537f0b3b4fdfb98233b45ef8138aa56',
       [Token.USDC]: '0xcc4a8fa63ce5c6a7f4a7a3d2ebcb738ddcd31209',
     },
-    VaultAddress: '',
+    Vault: {},
   },
   [ChainId.ARBITRUM]: {
     Router: '',
@@ -35,6 +36,35 @@ export const addresses: {
       [Token.vArbWBTC]: '0x92b42c66840C7AD907b4BF74879FF3eF7c529473',
       [Token.vArbUSDC]: '0xFCCf3cAbbe80101232d343252614b6A3eE81C989',
     },
-    VaultAddress: '0x86A9E67c3aE6B87Cc23652B2d72a21CB80dec146',
+    Vault: {
+      [Token.WETH]: '0x940a7ed683a60220de573ab702ec8f789ef0a402',
+      [Token.WBTC]: '0x7546966122e636a601a3ea4497d3509f160771d8',
+      [Token.USDC]: '0x5bdf85216ec1e38d6458c870992a69e38e03f7ef',
+      [Token.aArbWETH]: '0x6286b9f080d27f860f6b4bb0226f8ef06cc9f2fc',
+      [Token.aArbWBTC]: '0x91746d6f9df58b9807a5bb0e54e4ea86600c2dba',
+      [Token.aArbUSDC]: '0x3155c5a49aa31ee99ea7fbcb1258192652a8001c',
+    },
   },
+}
+
+const getChainId = async (): Promise<ChainId> => {
+  const chainId = await network.provider.request({method: 'eth_chainId'})
+  return parseInt(chainId as string)
+}
+
+export async function getLighterConfig() {
+  const chainId = await getChainId()
+  if (!chainId) {
+    throw new Error(`ChainId ${chainId} is not supported`)
+  }
+
+  // assume mainnet forking is enabled for hardhat network
+  if (chainId == ChainId.HARDHAT) {
+    return lighterConfigs[ChainId.ARBITRUM]
+  }
+
+  if (!ChainId[chainId]) {
+    throw new Error(`ChainId ${chainId} is not supported`)
+  }
+  return lighterConfigs[chainId]
 }
