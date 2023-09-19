@@ -1,6 +1,6 @@
-import * as IAToken from '@aave/core-v3/artifacts/contracts/interfaces/IAToken.sol/IAToken.json'
+import * as IATokenABI from '@aave/core-v3/artifacts/contracts/interfaces/IAToken.sol/IAToken.json'
 import * as AAVEPoolV3 from '@aave/core-v3/artifacts/contracts/protocol/pool/Pool.sol/Pool.json'
-import {AToken, IPool} from '@aave/core-v3/dist/types/types'
+import {IAToken, IPool} from '@aave/core-v3/dist/types/types'
 import {ethers} from 'hardhat'
 import {Contract} from 'ethers'
 import {getLighterConfig} from '../../config'
@@ -24,7 +24,7 @@ export async function getTokenAt(address: string): Promise<IERC20Metadata> {
 
 export async function getATokenAt(address: string) {
   const [signer] = await ethers.getSigners()
-  return new Contract(address, IAToken.abi, signer) as AToken
+  return new Contract(address, IATokenABI.abi, signer) as IAToken
 }
 
 export async function deployTokens() {
