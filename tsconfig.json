@@ -11,6 +11,6 @@
     "types": ["@nomiclabs/hardhat-ethers", "@nomiclabs/hardhat-waffle"],
     "resolveJsonModule": true
   },
-  "include": ["./test", "./scripts", "./typechain-types", "./reports"],
+  "include": ["./test", "./scripts", "./typechain-types", "./reports", "./config"],
   "files": ["./hardhat.config.ts"]
 }

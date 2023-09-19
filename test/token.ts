@@ -1,40 +1,73 @@
-import {IERC20Metadata} from '../typechain-types'
+import {IERC20, IERC20Metadata} from '../typechain-types'
 import {ethers} from 'hardhat'
 import {expect} from 'chai'
 import {parseEther, parseUnits} from 'ethers/lib/utils'
+import {Token, getLighterConfig} from 'config'
+import {BigNumber} from 'ethers'
+import {SignerWithAddress} from '@nomiclabs/hardhat-ethers/signers'
 
 export async function getTokenAt(address: string): Promise<IERC20Metadata> {
   const [signer] = await ethers.getSigners()
   return (await ethers.getContractAt('IERC20Metadata', address, signer)) as IERC20Metadata
 }
 
-const WETHAddress = '0x4d541F0B8039643783492F9865C7f7de4F54eB5f'
-const USDCeAddress = '0xcC4a8FA63cE5C6a7f4A7A3D2EbCb738ddcD31209'
-const userWithFunds = '0x86A9E67c3aE6B87Cc23652B2d72a21CB80dec146'
+// send specified amount to recipient
+// the funds are being send from the configured Vault address for that token, since tokens are not mintable
+export async function fundAccount(token: IERC20, recipient: string | SignerWithAddress, amount: BigNumber) {
+  const config = await getLighterConfig()
+
+  // get vault from token address
+  let vaultAddress = null
+  for (const s in config.Tokens) {
+    if (config.Tokens[s as Token]! == token.address) {
+      vaultAddress = config.Vault[s as Token]!
+    }
+  }
+  if (vaultAddress == null) {
+    throw `token ${token.address} is not used`
+  }
+  const vault = await ethers.getImpersonatedSigner(vaultAddress)
+
+  const recipientAddress = typeof recipient == 'string' ? recipient : recipient.address
+  return token.connect(vault).transfer(recipientAddress, amount)
+}
 
 describe('token', async () => {
   it('forks WETH correctly', async () => {
-    const signer = await ethers.getImpersonatedSigner(userWithFunds)
-    const weth = await getTokenAt(WETHAddress)
+    const config = await getLighterConfig()
+    const token = await getTokenAt(config.Tokens['WETH']!)
+    const vault = config.Vault['WETH']!
+    const amount = parseEther('200.0')
 
     // token is configured successfully
-    expect(await weth.symbol()).to.equal('WETH')
-    expect(await weth.balanceOf(signer.address)).to.be.greaterThan(parseEther('2.0'))
+    expect(await token.symbol()).to.equal('WETH')
 
-    // user is impersonated successfully and capable to send 1 WETH
-    const tx = await weth.connect(signer).transfer('0xeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeee', parseEther('1.0'))
-    await expect(tx).to.changeTokenBalance(weth, signer, parseEther('-1.0'))
+    // vault has balance
+    expect(await token.balanceOf(vault)).to.be.greaterThan(amount)
+
+    const [signer] = await ethers.getSigners()
+
+    // user is impersonated successfully and capable to send money
+    await fundAccount(token, signer, amount)
+    expect(await token.balanceOf(signer.address)).to.equal(amount)
   })
+
   it('forks USDC.e correctly', async () => {
-    const signer = await ethers.getImpersonatedSigner(userWithFunds)
-    const usdc = await getTokenAt(USDCeAddress)
+    const config = await getLighterConfig()
+    const token = await getTokenAt(config.Tokens['USDC']!)
+    const vault = config.Vault['USDC']!
+    const amount = parseUnits('200000.0', 6)
 
     // token is configured successfully
-    expect(await usdc.symbol()).to.equal('USDC')
-    expect(await usdc.balanceOf(signer.address)).to.be.greaterThan(parseUnits('4000.0', 6))
+    expect(await token.symbol()).to.equal('USDC')
 
-    // user is impersonated successfully and capable to send 1 USDC.e
-    const tx = await usdc.connect(signer).transfer('0xeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeee', parseUnits('1.0', 6))
-    await expect(tx).to.changeTokenBalance(usdc, signer, parseUnits('-1.0', 6))
+    // vault has balance
+    expect(await token.balanceOf(vault)).to.be.greaterThan(amount)
+
+    const [signer] = await ethers.getSigners()
+
+    // user is impersonated successfully and capable to send money
+    await fundAccount(token, signer, amount)
+    expect(await token.balanceOf(signer.address)).to.equal(amount)
   })
 })

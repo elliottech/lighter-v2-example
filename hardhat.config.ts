@@ -10,7 +10,8 @@ const config: HardhatUserConfig = {
   networks: {
     hardhat: {
       forking: {
-        url: `https://rpc.goerli.arbitrum.gateway.fm/`,
+        url: process.env.ARBITRUM_MAINNET_URL ? process.env.ARBITRUM_MAINNET_URL : `https://arb1.arbitrum.io/rpc`,
+        blockNumber: 132173014,
       },
     },
     testnet: {
@@ -18,7 +19,7 @@ const config: HardhatUserConfig = {
       accounts: process.env.PRIVATE_KEY ? [process.env.PRIVATE_KEY] : [],
     },
     mainnet: {
-      url: `https://arb1.arbitrum.io/rpc`,
+      url: process.env.ARBITRUM_MAINNET_URL ? process.env.ARBITRUM_MAINNET_URL : `https://arb1.arbitrum.io/rpc`,
       accounts: process.env.PRIVATE_KEY ? [process.env.PRIVATE_KEY] : [],
     },
   },
