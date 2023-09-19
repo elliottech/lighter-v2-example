@@ -31,11 +31,11 @@ export async function deployTokens() {
   const config = await getLighterConfig()
   return {
     weth: await getTokenAt(config.Tokens['WETH']!),
-    // aweth: await getATokenAt(config.Tokens['aArbWETH']!),
-    // vweth: await getTokenAt(config.Tokens['vArbWETH']!),
+    aweth: await getATokenAt(config.Tokens['aArbWETH']!),
+    vweth: await getTokenAt(config.Tokens['vArbWETH']!),
 
     usdc: await getTokenAt(config.Tokens['USDC']!),
-    // ausdc: await getATokenAt(config.Tokens['aArbUSDC']!),
-    // vusdc: await getTokenAt(config.Tokens['vArbUSDC']!),
+    ausdc: await getATokenAt(config.Tokens['aArbUSDC']!),
+    vusdc: await getTokenAt(config.Tokens['vArbUSDC']!),
   }
 }
