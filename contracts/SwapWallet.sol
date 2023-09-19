@@ -99,4 +99,9 @@ contract SwapWallet is ILighterV2TransferCallback {
 
         return orderBook.swapExactSingle(isAsk, false, exactOutput, maxInput, recipient, callbackData);
     }
+
+    function withdraw(address tokenAddress, uint256 amount) external onlyOwner {
+        IERC20 token = IERC20(tokenAddress);
+        require(token.transfer(owner, amount), "Token transfer failed");
+    }
 }

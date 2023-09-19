@@ -3,6 +3,7 @@ import {IFactory, SwapWallet} from '../typechain-types'
 import {deployTokens, ParseUSDC, reset, getFactoryAt, ParseWETH} from './shared'
 import {fundAccount} from './token'
 import {getLighterConfig} from '../config'
+import {expect} from 'chai'
 
 async function deploySwapWallet(factory: IFactory) {
   const contractFactory = await ethers.getContractFactory('SwapWallet')
@@ -57,5 +58,20 @@ describe('Swap wallet', async () => {
     await fundAccount(weth, wallet.address, amount)
 
     await wallet.swapExactOutput(0, true, ParseUSDC(1000), amount, wallet.address)
+  })
+
+  it('can withdraw tokens', async () => {
+    const config = await getLighterConfig()
+    const factory = await getFactoryAt(config.Factory)
+    const wallet = await deploySwapWallet(factory)
+
+    const {weth} = await deployTokens()
+    const amount = ParseWETH(1)
+    await fundAccount(weth, wallet.address, amount)
+
+    await wallet.withdraw(weth.address, amount)
+
+    const [signer] = await ethers.getSigners()
+    expect(await weth.balanceOf(signer.address)).to.equal(amount)
   })
 })
