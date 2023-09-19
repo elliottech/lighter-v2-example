@@ -1,5 +1,6 @@
 import {BigNumber} from 'ethers'
-import {ChainId, LighterConfig, OrderBookKey, Token} from './types'
+import {ChainId, LighterConfig, OrderBookConfig, OrderBookKey, Token} from './types'
+import {ParseUSDC, ParseWBTC, ParseWETH} from '../shared'
 
 const lighterConfigs: {
   [ChainId: string]: LighterConfig
@@ -107,4 +108,50 @@ export async function getLighterConfig(forceTestnet?: boolean) {
     throw new Error(`ChainId ${chainId} is not supported`)
   }
   return lighterConfigs[chainId]
+}
+
+export const parseAmount = (
+  amount: BigNumber,
+  isAsk: boolean,
+  orderBookKey: OrderBookKey,
+  orderBookConfig: OrderBookConfig
+): BigNumber => {
+  switch (orderBookKey) {
+    case OrderBookKey.WETH_USDC:
+      return isAsk ? ParseWETH(amount) : ParseUSDC(amount)
+    case OrderBookKey.WBTC_USDC:
+      return isAsk ? ParseWBTC(amount) : ParseUSDC(amount)
+    default:
+      throw new Error(`Failed to parseAmount for ${amount} using config: ${JSON.stringify(orderBookConfig)}`)
+  }
+}
+
+export const parseBaseAmount = (
+  amount: BigNumber,
+  orderBookKey: OrderBookKey,
+  orderBookConfig: OrderBookConfig
+): BigNumber => {
+  switch (orderBookKey) {
+    case OrderBookKey.WETH_USDC:
+      return ParseWETH(amount).div(orderBookConfig.SizeTick as BigNumber)
+    case OrderBookKey.WBTC_USDC:
+      return ParseWBTC(amount).div(orderBookConfig.SizeTick as BigNumber)
+    default:
+      throw new Error(`Failed to parseBaseAmount for ${amount} using config: ${JSON.stringify(orderBookConfig)}`)
+  }
+}
+
+export const parseBasePrice = (
+  price: BigNumber,
+  orderBookKey: OrderBookKey,
+  orderBookConfig: OrderBookConfig
+): BigNumber => {
+  switch (orderBookKey) {
+    case OrderBookKey.WETH_USDC:
+      return ParseUSDC(price).div(orderBookConfig.PriceTick as BigNumber)
+    case OrderBookKey.WBTC_USDC:
+      return ParseUSDC(price).div(orderBookConfig.PriceTick as BigNumber)
+    default:
+      throw new Error(`Failed to parseBasePrice for ${price} using config: ${JSON.stringify(orderBookConfig)}`)
+  }
 }
