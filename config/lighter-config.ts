@@ -11,7 +11,7 @@ const lighterConfigs: {
       [OrderBookKey.WETH_USDC]: {
         Address: '0x5Fd98c554B29E0DE9DcF09eEd3339367C62b2606',
         Id: BigNumber.from(0),
-        SizeTick: BigNumber.from(10 ** 14),
+        SizeTick: BigNumber.from(10 ** 13),
         PriceTick: BigNumber.from(10 * 4),
       },
       [OrderBookKey.WBTC_USDC]: {
