@@ -15,7 +15,11 @@ const lighterConfigs: {
       [Token.WBTC]: '0xf133eb356537f0b3b4fdfb98233b45ef8138aa56',
       [Token.USDC]: '0xcc4a8fa63ce5c6a7f4a7a3d2ebcb738ddcd31209',
     },
-    Vault: {},
+    Vault: {
+      [Token.WETH]: '0x86A9E67c3aE6B87Cc23652B2d72a21CB80dec146',
+      [Token.WBTC]: '0x86A9E67c3aE6B87Cc23652B2d72a21CB80dec146',
+      [Token.USDC]: '0x86A9E67c3aE6B87Cc23652B2d72a21CB80dec146',
+    },
     AAVEPool: '',
   },
   [ChainId.ARBITRUM]: {
