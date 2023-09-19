@@ -14,8 +14,21 @@ const lighterConfigs: {
       [Token.WETH]: '0x4d541f0b8039643783492f9865c7f7de4f54eb5f',
       [Token.WBTC]: '0xf133eb356537f0b3b4fdfb98233b45ef8138aa56',
       [Token.USDC]: '0xcc4a8fa63ce5c6a7f4a7a3d2ebcb738ddcd31209',
+
+      // this are not real AAVE tokens, but they are here so the tests are passing
+      // when deploying tokens using testnet forking
+      [Token.aArbWETH]: '0x4d541f0b8039643783492f9865c7f7de4f54eb5f',
+      [Token.aArbWBTC]: '0xf133eb356537f0b3b4fdfb98233b45ef8138aa56',
+      [Token.aArbUSDC]: '0xcc4a8fa63ce5c6a7f4a7a3d2ebcb738ddcd31209',
+      [Token.vArbWETH]: '0x4d541f0b8039643783492f9865c7f7de4f54eb5f',
+      [Token.vArbWBTC]: '0xf133eb356537f0b3b4fdfb98233b45ef8138aa56',
+      [Token.vArbUSDC]: '0xcc4a8fa63ce5c6a7f4a7a3d2ebcb738ddcd31209',
     },
-    Vault: {},
+    Vault: {
+      [Token.WETH]: '0x86A9E67c3aE6B87Cc23652B2d72a21CB80dec146',
+      [Token.WBTC]: '0x86A9E67c3aE6B87Cc23652B2d72a21CB80dec146',
+      [Token.USDC]: '0x86A9E67c3aE6B87Cc23652B2d72a21CB80dec146',
+    },
     AAVEPool: '',
   },
   [ChainId.ARBITRUM]: {
@@ -54,7 +67,11 @@ async function getChainId(): Promise<ChainId> {
   return parseInt(chainId as string)
 }
 
-export async function getLighterConfig() {
+export async function getLighterConfig(forceTestnet?: boolean) {
+  if (forceTestnet) {
+    return lighterConfigs[ChainId.ARBITRUM_GOERLI]
+  }
+
   const chainId = await getChainId()
   if (!chainId) {
     throw new Error(`ChainId ${chainId} is not supported`)
