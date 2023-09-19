@@ -36,6 +36,81 @@ task('createFillOrKillOrder')
     }
   })
 
+task('createI0COrder')
+  .addParam('orderBookName')
+  .addParam('amount')
+  .addParam('price')
+  .addParam('isask', 'whatever or not order is ask', null, boolean)
+  .setDescription('create IoC-Order via Router')
+  .setAction(async ({orderBookName, amount, price, isask}, hre) => {
+    const lighterConfig = await getLighterConfig()
+    const routerContract = getRouterAt(lighterConfig.Router, hre)
+    const orderBookConfig = lighterConfig.OrderBooks[orderBookName as OrderBookKey] as OrderBookConfig
+    const amountBase = ParseWETH(amount).div(orderBookConfig.SizeTick as BigNumber)
+    const priceBase = ParseUSDC(price).div(orderBookConfig.PriceTick as BigNumber)
+    const tx = await (
+      await routerContract
+    ).createIoCOrder(orderBookConfig.Id as BigNumber, amountBase, priceBase, isask)
+    await tx.wait()
+    const successIndicator = await isSuccessful(hre.ethers.provider, tx.hash)
+
+    if (successIndicator) {
+      console.log(`IoC-Order Transaction: ${tx.hash} is successful`)
+    } else {
+      console.log(`IoC-Order Transaction: ${tx.hash} failed`)
+    }
+  })
+
+task('createLimitOrder')
+  .addParam('orderBookName')
+  .addParam('amount')
+  .addParam('price')
+  .addParam('isask', 'whatever or not order is ask', null, boolean)
+  .setDescription('create Limit-Order via Router')
+  .setAction(async ({orderBookName, amount, price, isask}, hre) => {
+    const lighterConfig = await getLighterConfig()
+    const routerContract = getRouterAt(lighterConfig.Router, hre)
+    const orderBookConfig = lighterConfig.OrderBooks[orderBookName as OrderBookKey] as OrderBookConfig
+    const amountBase = ParseWETH(amount).div(orderBookConfig.SizeTick as BigNumber)
+    const priceBase = ParseUSDC(price).div(orderBookConfig.PriceTick as BigNumber)
+    const tx = await (
+      await routerContract
+    ).createLimitOrder(orderBookConfig.Id as BigNumber, amountBase, priceBase, isask, 0)
+    await tx.wait()
+    const successIndicator = await isSuccessful(hre.ethers.provider, tx.hash)
+
+    if (successIndicator) {
+      console.log(`Limit-Order Transaction: ${tx.hash} is successful`)
+    } else {
+      console.log(`Limit-Order Transaction: ${tx.hash} failed`)
+    }
+  })
+
+task('createLimitOrder')
+  .addParam('orderBookName')
+  .addParam('amount')
+  .addParam('price')
+  .addParam('isask', 'whatever or not order is ask', null, boolean)
+  .setDescription('create Limit-Order via Router')
+  .setAction(async ({orderBookName, amount, price, isask}, hre) => {
+    const lighterConfig = await getLighterConfig()
+    const routerContract = getRouterAt(lighterConfig.Router, hre)
+    const orderBookConfig = lighterConfig.OrderBooks[orderBookName as OrderBookKey] as OrderBookConfig
+    const amountBase = ParseWETH(amount).div(orderBookConfig.SizeTick as BigNumber)
+    const priceBase = ParseUSDC(price).div(orderBookConfig.PriceTick as BigNumber)
+    const tx = await (
+      await routerContract
+    ).createLimitOrder(orderBookConfig.Id as BigNumber, amountBase, priceBase, isask, 0)
+    await tx.wait()
+    const successIndicator = await isSuccessful(hre.ethers.provider, tx.hash)
+
+    if (successIndicator) {
+      console.log(`Limit-Order Transaction: ${tx.hash} is successful`)
+    } else {
+      console.log(`Limit-Order Transaction: ${tx.hash} failed`)
+    }
+  })
+
 async function getRouterAt(address: string, hre: HardhatRuntimeEnvironment): Promise<IRouter> {
   const [signer] = await hre.ethers.getSigners()
   return (await hre.ethers.getContractAt(RouterABI.abi, address, signer)) as any as IRouter
