@@ -11,10 +11,14 @@ const lighterConfigs: {
       [OrderBookKey.WETH_USDC]: {
         Address: '0x5Fd98c554B29E0DE9DcF09eEd3339367C62b2606',
         Id: BigNumber.from(0),
+        SizeTick: BigNumber.from(10 ** 14),
+        PriceTick: BigNumber.from(10 * 4),
       },
       [OrderBookKey.WBTC_USDC]: {
         Address: '0xa791f2eC05b6A6771397B4AE4fAb42E84bb22008',
         Id: BigNumber.from(1),
+        SizeTick: BigNumber.from(10 * 2),
+        PriceTick: BigNumber.from(10 ** 5),
       },
     },
     Tokens: {
@@ -42,8 +46,18 @@ const lighterConfigs: {
     Router: '',
     Factory: '',
     OrderBooks: {
-      [OrderBookKey.WETH_USDC]: {Address: '', Id: 0},
-      [OrderBookKey.WBTC_USDC]: {Address: '', Id: 0},
+      [OrderBookKey.WETH_USDC]: {
+        Address: '',
+        Id: BigNumber.from(0),
+        SizeTick: BigNumber.from(10 ** 14),
+        PriceTick: BigNumber.from(10 ** 4),
+      },
+      [OrderBookKey.WBTC_USDC]: {
+        Address: '',
+        Id: BigNumber.from(1),
+        SizeTick: BigNumber.from(10 * 2),
+        PriceTick: BigNumber.from(10 ** 5),
+      },
     },
     Tokens: {
       [Token.WETH]: '0x82aF49447D8a07e3bd95BD0d56f35241523fBab1',

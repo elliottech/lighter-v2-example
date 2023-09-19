@@ -3,7 +3,7 @@ import {HardhatRuntimeEnvironment} from 'hardhat/types'
 import {boolean} from 'hardhat/internal/core/params/argumentTypes'
 import * as RouterABI from '@elliottech/lighter-v2-periphery/artifacts/contracts/Router.sol/Router.json'
 import {BigNumber} from 'ethers'
-import {OrderBookKey, getLighterConfig} from '../config'
+import {OrderBookConfig, OrderBookKey, getLighterConfig} from '../config'
 import {IRouter} from '../typechain-types'
 import {ParseWETH, ParseUSDC, isSuccessful} from '../shared'
 
@@ -20,10 +20,12 @@ task('createFillOrKillOrder')
   .setAction(async ({orderBookName, amount, price, isask}, hre) => {
     const lighterConfig = await getLighterConfig()
     const routerContract = getRouterAt(lighterConfig.Router, hre)
-    const orderBookId = lighterConfig.OrderBooks[orderBookName as OrderBookKey]?.Id as BigNumber
-    const amountBase = ParseWETH(amount)
-    const priceBase = ParseUSDC(price)
-    const tx = await (await routerContract).createFoKOrder(orderBookId, amountBase, priceBase, isask)
+    const orderBookConfig = lighterConfig.OrderBooks[orderBookName as OrderBookKey] as OrderBookConfig
+    const amountBase = ParseWETH(amount).div(orderBookConfig.SizeTick as BigNumber)
+    const priceBase = ParseUSDC(price).div(orderBookConfig.PriceTick as BigNumber)
+    const tx = await (
+      await routerContract
+    ).createFoKOrder(orderBookConfig.Id as BigNumber, amountBase, priceBase, isask)
     await tx.wait()
     const successIndicator = await isSuccessful(hre.ethers.provider, tx.hash)
 
