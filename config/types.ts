@@ -1,3 +1,5 @@
+import {BigNumber} from 'ethers'
+
 export enum OrderBookKey {
   WETH_USDC = 'WETH-USDC',
   WBTC_USDC = 'WBTC-USDC',
@@ -24,8 +26,13 @@ export enum ChainId {
 export interface LighterConfig {
   Router: string
   Factory: string
-  OrderBooks: Record<OrderBookKey, string>
+  OrderBooks: Partial<Record<OrderBookKey, OrderBookConfig>>
   Tokens: Partial<Record<Token, string>>
   Vault: Partial<Record<Token, string>>
   AAVEPool: string
+}
+
+export interface OrderBookConfig {
+  Address: string
+  Id: BigNumber
 }

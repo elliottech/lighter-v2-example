@@ -1,3 +1,4 @@
+import {BigNumber} from 'ethers'
 import {ChainId, LighterConfig, OrderBookKey, Token} from './types'
 
 const lighterConfigs: {
@@ -7,8 +8,14 @@ const lighterConfigs: {
     Router: '0x42E138965BaCDdF6E1fb2774C55ab84b471c0ab7',
     Factory: '0xB15457ea816677564145AF39D92A9aE68fde1E96',
     OrderBooks: {
-      [OrderBookKey.WETH_USDC]: '0x5Fd98c554B29E0DE9DcF09eEd3339367C62b2606',
-      [OrderBookKey.WBTC_USDC]: '0xa791f2eC05b6A6771397B4AE4fAb42E84bb22008',
+      [OrderBookKey.WETH_USDC]: {
+        Address: '0x5Fd98c554B29E0DE9DcF09eEd3339367C62b2606',
+        Id: BigNumber.from(0),
+      },
+      [OrderBookKey.WBTC_USDC]: {
+        Address: '0xa791f2eC05b6A6771397B4AE4fAb42E84bb22008',
+        Id: BigNumber.from(1),
+      },
     },
     Tokens: {
       [Token.WETH]: '0x4d541f0b8039643783492f9865c7f7de4f54eb5f',
@@ -35,8 +42,8 @@ const lighterConfigs: {
     Router: '',
     Factory: '',
     OrderBooks: {
-      [OrderBookKey.WETH_USDC]: '',
-      [OrderBookKey.WBTC_USDC]: '',
+      [OrderBookKey.WETH_USDC]: {Address: '', Id: 0},
+      [OrderBookKey.WBTC_USDC]: {Address: '', Id: 0},
     },
     Tokens: {
       [Token.WETH]: '0x82aF49447D8a07e3bd95BD0d56f35241523fBab1',
