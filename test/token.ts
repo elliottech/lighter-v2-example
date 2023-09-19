@@ -33,7 +33,7 @@ export async function fundAccount(token: IERC20, recipient: string | SignerWithA
 }
 
 describe('token', async () => {
-  it('forks weth correctly', async () => {
+  it('forks WETH correctly', async () => {
     const config = await getLighterConfig()
     const token = await getTokenAt(config.Tokens['WETH']!)
     const vault = config.Vault['WETH']!

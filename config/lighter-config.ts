@@ -1,5 +1,4 @@
 import {ChainId, LighterConfig, OrderBookKey, Token} from './types'
-import {HardhatRuntimeEnvironment} from 'hardhat/types'
 
 const lighterConfigs: {
   [ChainId: string]: LighterConfig
@@ -47,14 +46,14 @@ const lighterConfigs: {
   },
 }
 
-async function getChainId(hre?: HardhatRuntimeEnvironment): Promise<ChainId> {
-  let network = hre == null ? require('hardhat').network : hre.network
+async function getChainId(): Promise<ChainId> {
+  let network = require('hardhat').network
   const chainId = await network.provider.request({method: 'eth_chainId'})
   return parseInt(chainId as string)
 }
 
-export async function getLighterConfig(hre?: HardhatRuntimeEnvironment) {
-  const chainId = await getChainId(hre)
+export async function getLighterConfig() {
+  const chainId = await getChainId()
   if (!chainId) {
     throw new Error(`ChainId ${chainId} is not supported`)
   }
