@@ -3,7 +3,7 @@ import * as AAVEPoolV3 from '@aave/core-v3/artifacts/contracts/protocol/pool/Poo
 import {IAToken, IPool} from '@aave/core-v3/dist/types/types'
 import {ethers} from 'hardhat'
 import {Contract} from 'ethers'
-import {getLighterConfig} from '../../config'
+import {getLighterConfig, LighterConfig} from '../../config'
 import {IERC20Metadata, IFactory} from '../../typechain-types'
 import * as Factory from '@elliottech/lighter-v2-core/artifacts/contracts/Factory.sol/Factory.json'
 
@@ -27,8 +27,11 @@ export async function getATokenAt(address: string) {
   return new Contract(address, IATokenABI.abi, signer) as IAToken
 }
 
-export async function deployTokens() {
-  const config = await getLighterConfig()
+export async function deployTokens(config?: LighterConfig) {
+  if (config == null) {
+    config = await getLighterConfig()
+  }
+
   return {
     weth: await getTokenAt(config.Tokens['WETH']!),
     aweth: await getATokenAt(config.Tokens['aArbWETH']!),
