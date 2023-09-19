@@ -1,15 +1,11 @@
-import {IERC20, IERC20Metadata} from '../typechain-types'
+import {IERC20} from '../typechain-types'
 import {ethers} from 'hardhat'
 import {expect} from 'chai'
 import {parseEther, parseUnits} from 'ethers/lib/utils'
-import {Token, getLighterConfig} from 'config'
+import {Token, getLighterConfig} from '../config'
 import {BigNumber} from 'ethers'
 import {SignerWithAddress} from '@nomiclabs/hardhat-ethers/signers'
-
-export async function getTokenAt(address: string): Promise<IERC20Metadata> {
-  const [signer] = await ethers.getSigners()
-  return (await ethers.getContractAt('IERC20Metadata', address, signer)) as IERC20Metadata
-}
+import {getTokenAt, reset} from './shared'
 
 // send specified amount to recipient
 // the funds are being send from the configured Vault address for that token, since tokens are not mintable
@@ -33,6 +29,10 @@ export async function fundAccount(token: IERC20, recipient: string | SignerWithA
 }
 
 describe('token', async () => {
+  beforeEach(async function () {
+    await reset()
+  })
+
   it('forks WETH correctly', async () => {
     const config = await getLighterConfig()
     const token = await getTokenAt(config.Tokens['WETH']!)

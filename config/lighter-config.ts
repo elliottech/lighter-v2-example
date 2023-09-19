@@ -16,6 +16,7 @@ const lighterConfigs: {
       [Token.USDC]: '0xcc4a8fa63ce5c6a7f4a7a3d2ebcb738ddcd31209',
     },
     Vault: {},
+    AAVEPool: '',
   },
   [ChainId.ARBITRUM]: {
     Router: '',
@@ -43,6 +44,7 @@ const lighterConfigs: {
       [Token.aArbWBTC]: '0x91746d6f9df58b9807a5bb0e54e4ea86600c2dba',
       [Token.aArbUSDC]: '0x3155c5a49aa31ee99ea7fbcb1258192652a8001c',
     },
+    AAVEPool: '0x794a61358D6845594F94dc1DB02A252b5b4814aD',
   },
 }
 

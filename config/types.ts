@@ -27,4 +27,5 @@ export interface LighterConfig {
   OrderBooks: Record<OrderBookKey, string>
   Tokens: Partial<Record<Token, string>>
   Vault: Partial<Record<Token, string>>
+  AAVEPool: string
 }
