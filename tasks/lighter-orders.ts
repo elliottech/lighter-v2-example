@@ -7,6 +7,14 @@ import {BigNumber} from 'ethers'
 import {OrderBookKey, getLighterConfig} from '../config'
 import {IRouter} from '../typechain-types'
 
+
+// WETH-USDC
+// 2 WETH to amount0Base = 20 * 10**18 / 10**14 = 20 * 10**4 = 200000
+//amount0Base = 200000
+// 2000 USDC as price to priceBase = 1975.55 * 10**6 / 10**4 = 1975.55 * 10**2 = 200000
+//priceBase = 200000
+
+// npx hardhat createFillOrKillOrder --orderBookName WETH-USDC --amount 200000 --price 200000 --isAsk true  --network arbgoerli
 task('createFillOrKillOrder')
   .addParam('orderBookName')
   .addParam('amount')
