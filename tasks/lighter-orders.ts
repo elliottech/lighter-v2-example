@@ -8,7 +8,7 @@ import {CreateOrderEvent, getCreateOrderEvent} from '../shared/event-util'
 // WETH-USDC
 //amount = 0.2 to be parsed as amount0Base = 20 * 10**18 / 10**14 = 20 * 10**4 = 200000
 //price = 1975.55 USDC to be parsed as priceBase = 1975.55 * 10**6 / 10**4 = 1975.55 * 10**2 = 197555
-// npx hardhat createFillOrKillOrder --orderBookName WETH-USDC --amount 0.2 --price 1975.55 --isask true  --network arbgoerli
+// npx hardhat createFillOrKillOrder --orderBookName WETH-USDC --amount 0.2 --price 1975.55 --isask true --network arbgoerli
 task('createFillOrKillOrder')
   .addParam('orderbookname')
   .addParam('amount')
