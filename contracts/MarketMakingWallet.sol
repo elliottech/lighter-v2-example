@@ -64,7 +64,7 @@ contract MarketMakingWallet is ILighterV2TransferCallback {
 
     /// @dev Creates performance limit orders in the order book.
     /// @notice Can only be called by owner.
-    /// @param orderBookId The id of the order book which will be used
+    /// @param orderBook The address of the order book
     /// @param amount0 The amount of token0 for the order
     /// @param price The prices denominated in token1
     /// @param isAsk Whether order is an ask order
@@ -74,16 +74,15 @@ contract MarketMakingWallet is ILighterV2TransferCallback {
     /// Passing 0 will always work, but might result in a higher gas cost.
     /// @return orderId The id of the created order
     function createLimitOrder(
-        uint8 orderBookId,
+        IOrderBook orderBook,
         uint256 amount0,
         uint256 price,
         bool isAsk,
         uint32 hintId
     ) public onlyOwner returns (uint32 orderId) {
-        IOrderBook orderBook = IOrderBook(factory.getOrderBookFromId(orderBookId));
         uint256 sizeTick = orderBook.sizeTick();
         uint256 priceTick = orderBook.priceTick();
-        bytes memory callbackData = abi.encodePacked(orderBookId);
+        bytes memory callbackData = abi.encodePacked(orderBook.orderBookId());
 
         return
             orderBook.createOrder(
@@ -99,11 +98,10 @@ contract MarketMakingWallet is ILighterV2TransferCallback {
 
     /// @dev Cancels performance limit orders in the order book.
     /// @notice Can only be called by owner.
-    /// @param orderBookId The id of the order book which will be used
+    /// @param orderBook The address of the order book
     /// @param orderId The id of the order
     /// @return isCanceled Whether the order was canceled.
-    function cancelLimitOrder(uint8 orderBookId, uint32 orderId) external onlyOwner returns (bool isCanceled) {
-        IOrderBook orderBook = IOrderBook(factory.getOrderBookFromId(orderBookId));
+    function cancelLimitOrder(IOrderBook orderBook, uint32 orderId) external onlyOwner returns (bool isCanceled) {
         return orderBook.cancelLimitOrder(orderId, address(this));
     }
 
@@ -111,12 +109,11 @@ contract MarketMakingWallet is ILighterV2TransferCallback {
     /// Tokens must be sent to the wallet in advance for the deposit to work.
     /// Another withdrawal will be needed to return the tokens to the owner.
     /// Can only be called by the owner.
-    /// @param orderBookId The orderBookId where the funds will be deposited into
+    /// @param orderBook The address of the order book
     /// @param tokenAddress The address of the token which is being deposited
     /// @param amount The amount of token that will be deposited
-    function depositInOrderBook(uint8 orderBookId, address tokenAddress, uint256 amount) external onlyOwner {
-        IOrderBook orderBook = IOrderBook(factory.getOrderBookFromId(orderBookId));
-        bytes memory callbackData = abi.encodePacked(orderBookId);
+    function depositInOrderBook(IOrderBook orderBook, address tokenAddress, uint256 amount) external onlyOwner {
+        bytes memory callbackData = abi.encodePacked(orderBook.orderBookId());
 
         if (address(orderBook.token0()) == tokenAddress) {
             return orderBook.depositToken(amount, true, callbackData);
@@ -130,12 +127,10 @@ contract MarketMakingWallet is ILighterV2TransferCallback {
     /// @notice Claims token amount from the orderBook and deposits it back into the wallet.
     /// Another withdrawal will be needed to retrieve the tokens back to the owner.
     /// Can only be called by the owner.
-    /// @param orderBookId The orderBookId where the funds will be claimed to
+    /// @param orderBook The address of the order book
     /// @param tokenAddress The address of the token which is being claimed
     /// @param amount The amount of token that will be claimed back into the wallet
-    function claimFromOrderBook(uint8 orderBookId, address tokenAddress, uint256 amount) external onlyOwner {
-        IOrderBook orderBook = IOrderBook(factory.getOrderBookFromId(orderBookId));
-
+    function claimFromOrderBook(IOrderBook orderBook, address tokenAddress, uint256 amount) external onlyOwner {
         if (address(orderBook.token0()) == tokenAddress) {
             return orderBook.claimToken(amount, true);
         } else if (address(orderBook.token1()) == tokenAddress) {

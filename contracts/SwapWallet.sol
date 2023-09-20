@@ -62,7 +62,7 @@ contract SwapWallet is ILighterV2TransferCallback {
 
     /// @notice Performs swap in the given order book.
     /// Can only be called by the owner.
-    /// @param orderBookId The unique identifier of the order book
+    /// @param orderBook The address of the order book
     /// @param isAsk Whether the order is an ask order
     /// @param exactInput exactInput to pay for the swap (can be token0 or token1 based on isAsk)
     /// @param minOutput Minimum output amount expected to recieve from swap (can be token0 or token1 based on isAsk)
@@ -70,20 +70,20 @@ contract SwapWallet is ILighterV2TransferCallback {
     /// @return swappedInput The amount of input taker paid for the swap
     /// @return swappedOutput The amount of output taker received from the swap
     function swapExactInput(
-        uint8 orderBookId,
+        IOrderBook orderBook,
         bool isAsk,
         uint256 exactInput,
         uint256 minOutput,
         address recipient
     ) external payable returns (uint256, uint256) {
-        IOrderBook orderBook = IOrderBook(factory.getOrderBookFromId(orderBookId));
-        bytes memory callbackData = abi.encodePacked(orderBookId);
+        bytes memory callbackData = abi.encodePacked(orderBook.orderBookId());
 
         return orderBook.swapExactSingle(isAsk, true, exactInput, minOutput, recipient, callbackData);
     }
 
     /// @notice Performs swap in the given order book.
     /// Can only be called by the owner.
+    /// @param orderBook The address of the order book
     /// @param isAsk Whether the order is an ask order
     /// @param exactOutput exactOutput to receive from the swap (can be token0 or token1 based on isAsk)
     /// @param maxInput Maximum input that the taker is willing to pay for the swap (can be token0 or token1 based on isAsk)
@@ -91,14 +91,13 @@ contract SwapWallet is ILighterV2TransferCallback {
     /// @return swappedInput The amount of input taker paid for the swap
     /// @return swappedOutput The amount of output taker received from the swap
     function swapExactOutput(
-        uint8 orderBookId,
+        IOrderBook orderBook,
         bool isAsk,
         uint256 exactOutput,
         uint256 maxInput,
         address recipient
     ) external payable returns (uint256, uint256) {
-        IOrderBook orderBook = IOrderBook(factory.getOrderBookFromId(orderBookId));
-        bytes memory callbackData = abi.encodePacked(orderBookId);
+        bytes memory callbackData = abi.encodePacked(orderBook.orderBookId());
 
         return orderBook.swapExactSingle(isAsk, false, exactOutput, maxInput, recipient, callbackData);
     }

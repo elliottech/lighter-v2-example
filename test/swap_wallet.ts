@@ -1,14 +1,6 @@
-import {ethers, network} from 'hardhat'
-import {IFactory, SwapWallet} from '../typechain-types'
-import {deployTokens, ParseUSDC, getFactoryAt, ParseWETH, resetTestnet} from './shared'
-import {fundAccount} from './token'
-import {getLighterConfig} from '../config'
+import {ethers} from 'hardhat'
+import {ParseUSDC, ParseWETH, resetTestnet, deployContracts} from './shared'
 import {expect} from 'chai'
-
-async function deploySwapWallet(factory: IFactory) {
-  const contractFactory = await ethers.getContractFactory('SwapWallet')
-  return (await contractFactory.deploy(factory.address)) as SwapWallet
-}
 
 describe('Swap wallet', async () => {
   beforeEach(async function () {
@@ -17,61 +9,32 @@ describe('Swap wallet', async () => {
   })
 
   it('it swaps exact input USDC for WETH', async () => {
-    const config = await getLighterConfig(true)
-    const factory = await getFactoryAt(config.Factory)
-    const wallet = await deploySwapWallet(factory)
-    const {usdc} = await deployTokens(config)
-    const amount = ParseUSDC(1000)
-    await fundAccount(usdc, wallet.address, amount, config)
+    const {swapWallet: wallet, orderBook} = await deployContracts(true)
 
-    await wallet.swapExactInput(0, false, amount, ParseWETH(0.25), wallet.address)
+    await wallet.swapExactInput(orderBook.address, false, ParseUSDC(1000), ParseWETH(0.25), wallet.address)
   })
   it('it swaps exact input WETH for USDC', async () => {
-    const config = await getLighterConfig(true)
-    const factory = await getFactoryAt(config.Factory)
-    const wallet = await deploySwapWallet(factory)
+    const {swapWallet: wallet, orderBook} = await deployContracts(true)
 
-    const {weth} = await deployTokens(config)
-    const amount = ParseWETH(1)
-    await fundAccount(weth, wallet.address, amount, config)
-
-    await wallet.swapExactInput(0, true, amount, ParseUSDC(1000), wallet.address)
+    await wallet.swapExactInput(orderBook.address, true, ParseWETH(1.0), ParseUSDC(1000), wallet.address)
   })
   it('it swaps exact output USDC for WETH', async () => {
-    const config = await getLighterConfig(true)
-    const factory = await getFactoryAt(config.Factory)
-    const wallet = await deploySwapWallet(factory)
+    const {swapWallet: wallet, orderBook} = await deployContracts(true)
 
-    const {usdc} = await deployTokens(config)
-    const amount = ParseUSDC(1000)
-    await fundAccount(usdc, wallet.address, amount, config)
-
-    await wallet.swapExactOutput(0, false, ParseWETH(0.25), amount, wallet.address)
+    await wallet.swapExactOutput(orderBook.address, false, ParseWETH(0.25), ParseUSDC(1000), wallet.address)
   })
   it('it swaps exact output WETH for USDC', async () => {
-    const config = await getLighterConfig(true)
-    const factory = await getFactoryAt(config.Factory)
-    const wallet = await deploySwapWallet(factory)
+    const {swapWallet: wallet, orderBook} = await deployContracts(true)
 
-    const {weth} = await deployTokens(config)
-    const amount = ParseWETH(1)
-    await fundAccount(weth, wallet.address, amount, config)
-
-    await wallet.swapExactOutput(0, true, ParseUSDC(1000), amount, wallet.address)
+    await wallet.swapExactOutput(orderBook.address, true, ParseUSDC(1000), ParseWETH(1.0), wallet.address)
   })
 
   it('can withdraw tokens', async () => {
-    const config = await getLighterConfig(true)
-    const factory = await getFactoryAt(config.Factory)
-    const wallet = await deploySwapWallet(factory)
+    const {swapWallet: wallet, weth} = await deployContracts(true)
 
-    const {weth} = await deployTokens(config)
-    const amount = ParseWETH(1)
-    await fundAccount(weth, wallet.address, amount, config)
-
-    await wallet.withdraw(weth.address, amount)
+    await wallet.withdraw(weth.address, ParseWETH(1.0))
 
     const [signer] = await ethers.getSigners()
-    expect(await weth.balanceOf(signer.address)).to.equal(amount)
+    expect(await weth.balanceOf(signer.address)).to.equal(ParseWETH(1.0))
   })
 })
