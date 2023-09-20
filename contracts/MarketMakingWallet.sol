@@ -67,26 +67,28 @@ contract MarketMakingWallet is ILighterV2TransferCallback {
     ///
     ///  @param orderBookId The id of the order book which will be used.
     ///  @param size The number of orders to create.
-    ///  @param amount0Base An array of amounts denominated in token0 to be used for each order.
-    ///  @param priceBase An array of prices denominated in token1 for each order.
+    ///  @param amount0 An array of amounts denominated in token0 to be used for each order.
+    ///  @param price An array of prices denominated in token1 for each order.
     ///  @param isAsk An array indicating whether each order is an "ask" order (true) or a "bid" order (false).
     ///  @param hintId An array of hint IDs to guide order placement in the order book.
     ///  @return orderId An array containing the order IDs of the created orders.
     function createLimitOrder(
         uint8 orderBookId,
         uint8 size,
-        uint64[] memory amount0Base,
-        uint64[] memory priceBase,
+        uint256[] memory amount0,
+        uint256[] memory price,
         bool[] memory isAsk,
         uint32[] memory hintId
     ) public onlyOwner returns (uint32[] memory orderId) {
         IOrderBook orderBook = IOrderBook(factory.getOrderBookFromId(orderBookId));
+        uint256 sizeTick = orderBook.sizeTick();
+        uint256 priceTick = orderBook.priceTick();
         orderId = new uint32[](size);
         bytes memory callbackData = abi.encodePacked(orderBookId);
         for (uint8 i; i < size; ) {
             orderId[i] = orderBook.createOrder(
-                amount0Base[i],
-                priceBase[i],
+                uint64(amount0[i] / sizeTick),
+                uint64(price[i] / priceTick),
                 isAsk[i],
                 address(this),
                 hintId[i],
@@ -145,9 +147,8 @@ contract MarketMakingWallet is ILighterV2TransferCallback {
     /// @param orderBookId The orderBookId where the funds will be claimed to
     /// @param tokenAddress The address of the token which is being claimed
     /// @param amount The amount of token that will be claimed back into the wallet
-    function depositFromOrderBook(uint8 orderBookId, address tokenAddress, uint256 amount) external onlyOwner {
+    function claimFromOrderBook(uint8 orderBookId, address tokenAddress, uint256 amount) external onlyOwner {
         IOrderBook orderBook = IOrderBook(factory.getOrderBookFromId(orderBookId));
-        orderBook.claimToken(amount, true);
 
         if (address(orderBook.token0()) == tokenAddress) {
             return orderBook.claimToken(amount, true);

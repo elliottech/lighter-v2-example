@@ -4,8 +4,10 @@ import {IAToken, IPool} from '@aave/core-v3/dist/types/types'
 import {ethers} from 'hardhat'
 import {Contract} from 'ethers'
 import {getLighterConfig, LighterConfig} from '../../config'
-import {IERC20Metadata, IFactory} from '../../typechain-types'
+import {IERC20Metadata, IFactory, IOrderBook} from '../../typechain-types'
 import * as Factory from '@elliottech/lighter-v2-core/artifacts/contracts/Factory.sol/Factory.json'
+import * as OrderBook from '@elliottech/lighter-v2-core/artifacts/contracts/OrderBook.sol/OrderBook.json'
+import {PromiseOrValue} from '../../typechain-types/common'
 
 export async function getAAVEPoolAt(address: string): Promise<IPool> {
   const [signer] = await ethers.getSigners()
@@ -22,9 +24,14 @@ export async function getTokenAt(address: string): Promise<IERC20Metadata> {
   return (await ethers.getContractAt('IERC20Metadata', address, signer)) as IERC20Metadata
 }
 
-export async function getATokenAt(address: string) {
+export async function getATokenAt(address: string): Promise<IAToken> {
   const [signer] = await ethers.getSigners()
   return new Contract(address, IATokenABI.abi, signer) as IAToken
+}
+
+export async function getOrderBookAt(address: PromiseOrValue<string>): Promise<IOrderBook> {
+  const [owner] = await ethers.getSigners()
+  return new Contract(await address, OrderBook.abi, owner) as IOrderBook
 }
 
 export async function deployTokens(config?: LighterConfig) {
