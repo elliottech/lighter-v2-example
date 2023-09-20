@@ -1,2 +1,2 @@
 export * from './amount'
-export * from './tx-util'
+export * from './contract-util'

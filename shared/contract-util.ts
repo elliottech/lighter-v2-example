@@ -1,7 +1,9 @@
 import {Provider} from '@ethersproject/providers'
 import * as RouterABI from '@elliottech/lighter-v2-periphery/artifacts/contracts/Router.sol/Router.json'
+import * as OrderBookABI from '@elliottech/lighter-v2-core/artifacts/contracts/OrderBook.sol/OrderBook.json'
 import {HardhatRuntimeEnvironment} from 'hardhat/types'
-import {IRouter} from '../typechain-types'
+import {IOrderBook, IRouter} from '../typechain-types'
+import {Contract} from 'ethers'
 
 export const isSuccessful = async (provider: Provider, transactionHash: string): Promise<boolean> => {
   const txReceipt = await provider.getTransactionReceipt(transactionHash)
@@ -21,4 +23,9 @@ export const isSuccessful = async (provider: Provider, transactionHash: string):
 export const getRouterAt = async (address: string, hre: HardhatRuntimeEnvironment): Promise<IRouter> => {
   const [signer] = await hre.ethers.getSigners()
   return (await hre.ethers.getContractAt(RouterABI.abi, address, signer)) as any as IRouter
+}
+
+export const getOrderBookAt = async (address: string, hre: HardhatRuntimeEnvironment): Promise<IOrderBook> => {
+  const [signer] = await hre.ethers.getSigners()
+  return (await hre.ethers.getContractAt(OrderBookABI.abi, address, signer)) as any as IOrderBook
 }

@@ -10,19 +10,19 @@ import {isSuccessful, getRouterAt} from '../shared'
 // isAsk = true
 // npx hardhat swapExactInputSingle --orderBookName WETH-USDC --isask true --exactInput 0.2 --minOutput 1950 --recipient '' --unwrap false --network arbgoerli
 task('swapExactInputSingle')
-  .addParam('orderBookName')
+  .addParam('orderbookname')
   .addParam('isask', 'whatever or not order is ask', null, boolean)
-  .addParam('exactInput')
-  .addParam('minOutput')
+  .addParam('exactinput')
+  .addParam('minoutput')
   .addParam('recipient')
   .addParam('unwrap', 'unwrap can be true or false', null, boolean)
   .setDescription('swapExactInputSingle via Router')
-  .setAction(async ({orderBookName, isask, exactInput, minOutput, recipient, unwrap}, hre) => {
+  .setAction(async ({orderbookname, isask, exactinput, minoutput, recipient, unwrap}, hre) => {
     const lighterConfig = await getLighterConfig()
     const routerContract = getRouterAt(lighterConfig.Router, hre)
-    const orderBookConfig = lighterConfig.OrderBooks[orderBookName as OrderBookKey] as OrderBookConfig
-    const exactInputAmount = parseAmount(exactInput, isask, orderBookName as OrderBookKey, orderBookConfig)
-    const minOutputAmount = parseAmount(minOutput, isask, orderBookName as OrderBookKey, orderBookConfig)
+    const orderBookConfig = lighterConfig.OrderBooks[orderbookname as OrderBookKey] as OrderBookConfig
+    const exactInputAmount = parseAmount(exactinput, isask, orderbookname as OrderBookKey, orderBookConfig)
+    const minOutputAmount = parseAmount(minoutput, isask, orderbookname as OrderBookKey, orderBookConfig)
     const tx = await (
       await routerContract
     ).swapExactInputSingle(orderBookConfig.Id as BigNumber, isask, exactInputAmount, minOutputAmount, recipient, unwrap)
@@ -30,9 +30,9 @@ task('swapExactInputSingle')
     const successIndicator = await isSuccessful(hre.ethers.provider, tx.hash)
 
     if (successIndicator) {
-      console.log(`swapExactInputSingle Transaction: ${tx.hash} on OrderBook: ${orderBookName} is successful`)
+      console.log(`swapExactInputSingle Transaction: ${tx.hash} on OrderBook: ${orderbookname} is successful`)
     } else {
-      console.log(`swapExactInputSingle Transaction: ${tx.hash} on OrderBook: ${orderBookName} failed`)
+      console.log(`swapExactInputSingle Transaction: ${tx.hash} on OrderBook: ${orderbookname} failed`)
     }
   })
 
@@ -42,19 +42,19 @@ task('swapExactInputSingle')
 // isAsk = true
 // npx hardhat swapExactOutputSingle --orderBookName WETH-USDC --isask true --exactOutput 2000 --maxInput 1.1 --recipient '' --unwrap false --network arbgoerli
 task('swapExactOutputSingle')
-  .addParam('orderBookName')
+  .addParam('orderbookname')
   .addParam('isask', 'whatever or not order is ask', null, boolean)
-  .addParam('exactOutput')
-  .addParam('maxInput')
+  .addParam('exactoutput')
+  .addParam('maxinput')
   .addParam('recipient')
   .addParam('unwrap', 'unwrap can be true or false', null, boolean)
   .setDescription('swapExactOutputSingle via Router')
-  .setAction(async ({orderBookName, isask, exactOutput, maxInput, recipient, unwrap}, hre) => {
+  .setAction(async ({orderbookname, isask, exactoutput, maxinput, recipient, unwrap}, hre) => {
     const lighterConfig = await getLighterConfig()
     const routerContract = getRouterAt(lighterConfig.Router, hre)
-    const orderBookConfig = lighterConfig.OrderBooks[orderBookName as OrderBookKey] as OrderBookConfig
-    const exactOutputAmount = parseAmount(exactOutput, isask, orderBookName as OrderBookKey, orderBookConfig)
-    const maxInputAmount = parseAmount(maxInput, isask, orderBookName as OrderBookKey, orderBookConfig)
+    const orderBookConfig = lighterConfig.OrderBooks[orderbookname as OrderBookKey] as OrderBookConfig
+    const exactOutputAmount = parseAmount(exactoutput, isask, orderbookname as OrderBookKey, orderBookConfig)
+    const maxInputAmount = parseAmount(maxinput, isask, orderbookname as OrderBookKey, orderBookConfig)
     const tx = await (
       await routerContract
     ).swapExactOutputSingle(
@@ -69,8 +69,8 @@ task('swapExactOutputSingle')
     const successIndicator = await isSuccessful(hre.ethers.provider, tx.hash)
 
     if (successIndicator) {
-      console.log(`swapExactOutputSingle Transaction: ${tx.hash} on OrderBook: ${orderBookName} is successful`)
+      console.log(`swapExactOutputSingle Transaction: ${tx.hash} on OrderBook: ${orderbookname} is successful`)
     } else {
-      console.log(`swapExactOutputSingle Transaction: ${tx.hash} on OrderBook: ${orderBookName} failed`)
+      console.log(`swapExactOutputSingle Transaction: ${tx.hash} on OrderBook: ${orderbookname} failed`)
     }
   })
