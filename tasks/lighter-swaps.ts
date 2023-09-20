@@ -2,7 +2,7 @@ import {task} from 'hardhat/config'
 import {boolean} from 'hardhat/internal/core/params/argumentTypes'
 import {BigNumber} from 'ethers'
 import {OrderBookConfig, OrderBookKey, getLighterConfig, parseAmount} from '../config'
-import {isSuccessful, getRouterAt} from '../shared'
+import {isSuccessful, getRouterAt, getSwapExactAmountEvent} from '../shared'
 
 // WETH-USDC
 //exact-input-amount of WETH = 1
@@ -30,7 +30,22 @@ task('swapExactInputSingle')
     const successIndicator = await isSuccessful(hre.ethers.provider, tx.hash)
 
     if (successIndicator) {
-      console.log(`swapExactInputSingle Transaction: ${tx.hash} on OrderBook: ${orderbookname} is successful`)
+      const swapExactAmountEvent = await getSwapExactAmountEvent(
+        hre.ethers.provider,
+        orderBookConfig.Address,
+        tx.hash,
+        hre
+      )
+
+      console.log(
+        `swapExactInputSingle Transaction: ${
+          tx.hash
+        } is successful on OrderBook: ${orderbookname} and SwapExactAmount: ${JSON.stringify(
+          swapExactAmountEvent,
+          null,
+          2
+        )} emitted`
+      )
     } else {
       console.log(`swapExactInputSingle Transaction: ${tx.hash} on OrderBook: ${orderbookname} failed`)
     }
@@ -69,7 +84,22 @@ task('swapExactOutputSingle')
     const successIndicator = await isSuccessful(hre.ethers.provider, tx.hash)
 
     if (successIndicator) {
-      console.log(`swapExactOutputSingle Transaction: ${tx.hash} on OrderBook: ${orderbookname} is successful`)
+      const swapExactAmountEvent = await getSwapExactAmountEvent(
+        hre.ethers.provider,
+        orderBookConfig.Address,
+        tx.hash,
+        hre
+      )
+
+      console.log(
+        `swapExactOutputSingle Transaction: ${
+          tx.hash
+        } is successful on OrderBook: ${orderbookname} and SwapExactAmount: ${JSON.stringify(
+          swapExactAmountEvent,
+          null,
+          2
+        )} emitted`
+      )
     } else {
       console.log(`swapExactOutputSingle Transaction: ${tx.hash} on OrderBook: ${orderbookname} failed`)
     }
