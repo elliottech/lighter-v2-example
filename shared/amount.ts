@@ -1,41 +1,23 @@
 import {BigNumber, BigNumberish, utils} from 'ethers'
 
-export function ParseWETH(value: BigNumberish): BigNumber {
-  if (typeof value == 'string') {
-    return utils.parseUnits(value, 18)
-  }
-  if (typeof value == 'number') {
-    return BigNumber.from(value * 100000000).mul(BigNumber.from(10).pow(10))
-  }
-  return BigNumber.from(value).mul(BigNumber.from(10).pow(18))
+export const parseAmount = (amount: BigNumber, tokenPrecision: number): BigNumber => {
+  return ParseTokenAmount(amount, tokenPrecision)
 }
 
-export function ParseUSDC(value: BigNumberish): BigNumber {
-  if (typeof value == 'string') {
-    return utils.parseUnits(value, 6)
-  }
-  if (typeof value == 'number') {
-    return BigNumber.from(value * 1000000)
-  }
-  return BigNumber.from(value).mul(BigNumber.from(10).pow(6))
+export const parseBaseAmount = (amount: BigNumber, tokenPrecision: number, sizeTick: BigNumber): BigNumber => {
+  return ParseTokenAmount(amount, tokenPrecision).div(sizeTick)
 }
 
-export function ParseWBTC(value: BigNumberish): BigNumber {
-  if (typeof value == 'string') {
-    return utils.parseUnits(value, 8)
-  }
-  if (typeof value == 'number') {
-    return BigNumber.from(value * 100000000)
-  }
-  return BigNumber.from(value).mul(BigNumber.from(10).pow(8))
+export const parseBasePrice = (price: BigNumber, tokenPrecision: number, priceTick: BigNumber): BigNumber => {
+  return ParseTokenAmount(price, tokenPrecision).div(priceTick)
 }
 
-export function ParseLINK(value: BigNumberish): BigNumber {
+export const ParseTokenAmount = (value: BigNumberish, precision: number): BigNumber => {
   if (typeof value == 'string') {
-    return utils.parseUnits(value, 18)
+    return utils.parseUnits(value, precision)
   }
   if (typeof value == 'number') {
-    return BigNumber.from(value * 100000000).mul(BigNumber.from(10).pow(10))
+    return BigNumber.from(value * 10 ** 6).mul(BigNumber.from(10).pow(precision - 6))
   }
-  return BigNumber.from(value).mul(BigNumber.from(10).pow(18))
+  return BigNumber.from(value).mul(BigNumber.from(10).pow(precision))
 }

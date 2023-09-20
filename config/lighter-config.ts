@@ -1,6 +1,6 @@
 import {BigNumber} from 'ethers'
-import {ChainId, LighterConfig, OrderBookConfig, OrderBookKey, Token} from './types'
-import {ParseUSDC, ParseWBTC, ParseWETH} from '../shared'
+import {ChainId, LighterConfig, OrderBookKey, OrderBookTick, Token} from './types'
+import {ParseTokenAmount} from '../shared'
 
 const lighterConfigs: {
   [ChainId: string]: LighterConfig
@@ -12,14 +12,10 @@ const lighterConfigs: {
       [OrderBookKey.WETH_USDC]: {
         Address: '0x5Fd98c554B29E0DE9DcF09eEd3339367C62b2606',
         Id: BigNumber.from(0),
-        SizeTick: BigNumber.from(10 ** 13),
-        PriceTick: BigNumber.from(10 * 4),
       },
       [OrderBookKey.WBTC_USDC]: {
         Address: '0xa791f2eC05b6A6771397B4AE4fAb42E84bb22008',
         Id: BigNumber.from(1),
-        SizeTick: BigNumber.from(10 * 2),
-        PriceTick: BigNumber.from(10 ** 5),
       },
     },
     Tokens: {
@@ -50,14 +46,10 @@ const lighterConfigs: {
       [OrderBookKey.WETH_USDC]: {
         Address: '',
         Id: BigNumber.from(0),
-        SizeTick: BigNumber.from(10 ** 14),
-        PriceTick: BigNumber.from(10 ** 4),
       },
       [OrderBookKey.WBTC_USDC]: {
         Address: '',
         Id: BigNumber.from(1),
-        SizeTick: BigNumber.from(10 * 2),
-        PriceTick: BigNumber.from(10 ** 5),
       },
     },
     Tokens: {
@@ -108,50 +100,4 @@ export async function getLighterConfig(forceTestnet?: boolean) {
     throw new Error(`ChainId ${chainId} is not supported`)
   }
   return lighterConfigs[chainId]
-}
-
-export const parseAmount = (
-  amount: BigNumber,
-  isAsk: boolean,
-  orderBookKey: OrderBookKey,
-  orderBookConfig: OrderBookConfig
-): BigNumber => {
-  switch (orderBookKey) {
-    case OrderBookKey.WETH_USDC:
-      return isAsk ? ParseWETH(amount) : ParseUSDC(amount)
-    case OrderBookKey.WBTC_USDC:
-      return isAsk ? ParseWBTC(amount) : ParseUSDC(amount)
-    default:
-      throw new Error(`Failed to parseAmount for ${amount} using config: ${JSON.stringify(orderBookConfig)}`)
-  }
-}
-
-export const parseBaseAmount = (
-  amount: BigNumber,
-  orderBookKey: OrderBookKey,
-  orderBookConfig: OrderBookConfig
-): BigNumber => {
-  switch (orderBookKey) {
-    case OrderBookKey.WETH_USDC:
-      return ParseWETH(amount).div(orderBookConfig.SizeTick as BigNumber)
-    case OrderBookKey.WBTC_USDC:
-      return ParseWBTC(amount).div(orderBookConfig.SizeTick as BigNumber)
-    default:
-      throw new Error(`Failed to parseBaseAmount for ${amount} using config: ${JSON.stringify(orderBookConfig)}`)
-  }
-}
-
-export const parseBasePrice = (
-  price: BigNumber,
-  orderBookKey: OrderBookKey,
-  orderBookConfig: OrderBookConfig
-): BigNumber => {
-  switch (orderBookKey) {
-    case OrderBookKey.WETH_USDC:
-      return ParseUSDC(price).div(orderBookConfig.PriceTick as BigNumber)
-    case OrderBookKey.WBTC_USDC:
-      return ParseUSDC(price).div(orderBookConfig.PriceTick as BigNumber)
-    default:
-      throw new Error(`Failed to parseBasePrice for ${price} using config: ${JSON.stringify(orderBookConfig)}`)
-  }
 }

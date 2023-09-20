@@ -1,8 +1,8 @@
 import {task} from 'hardhat/config'
 import {boolean} from 'hardhat/internal/core/params/argumentTypes'
 import {BigNumber} from 'ethers'
-import {OrderBookConfig, OrderBookKey, getLighterConfig, parseAmount} from '../config'
-import {isSuccessful, getRouterAt, getSwapExactAmountEvent} from '../shared'
+import {OrderBookConfig, OrderBookKey, getLighterConfig} from '../config'
+import {isSuccessful, getRouterAt, getSwapExactAmountEvent, getTokenPrecisions, parseAmount} from '../shared'
 
 // WETH-USDC
 //exact-input-amount of WETH = 1
@@ -21,8 +21,15 @@ task('swapExactInputSingle')
     const lighterConfig = await getLighterConfig()
     const routerContract = getRouterAt(lighterConfig.Router, hre)
     const orderBookConfig = lighterConfig.OrderBooks[orderbookname as OrderBookKey] as OrderBookConfig
-    const exactInputAmount = parseAmount(exactinput, isask, orderbookname as OrderBookKey, orderBookConfig)
-    const minOutputAmount = parseAmount(minoutput, isask, orderbookname as OrderBookKey, orderBookConfig)
+    const tokenPrecisions = await getTokenPrecisions(orderBookConfig.Address, hre)
+    const exactInputAmount = parseAmount(
+      exactinput,
+      isask ? tokenPrecisions.token0Precision : tokenPrecisions.token1Precision
+    )
+    const minOutputAmount = parseAmount(
+      minoutput,
+      isask ? tokenPrecisions.token1Precision : tokenPrecisions.token0Precision
+    )
     const tx = await (
       await routerContract
     ).swapExactInputSingle(orderBookConfig.Id as BigNumber, isask, exactInputAmount, minOutputAmount, recipient, unwrap)
@@ -68,8 +75,15 @@ task('swapExactOutputSingle')
     const lighterConfig = await getLighterConfig()
     const routerContract = getRouterAt(lighterConfig.Router, hre)
     const orderBookConfig = lighterConfig.OrderBooks[orderbookname as OrderBookKey] as OrderBookConfig
-    const exactOutputAmount = parseAmount(exactoutput, isask, orderbookname as OrderBookKey, orderBookConfig)
-    const maxInputAmount = parseAmount(maxinput, isask, orderbookname as OrderBookKey, orderBookConfig)
+    const tokenPrecisions = await getTokenPrecisions(orderBookConfig.Address, hre)
+    const exactOutputAmount = parseAmount(
+      exactoutput,
+      isask ? tokenPrecisions.token1Precision : tokenPrecisions.token0Precision
+    )
+    const maxInputAmount = parseAmount(
+      maxinput,
+      isask ? tokenPrecisions.token0Precision : tokenPrecisions.token1Precision
+    )
     const tx = await (
       await routerContract
     ).swapExactOutputSingle(

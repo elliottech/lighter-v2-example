@@ -35,6 +35,9 @@ export interface LighterConfig {
 export interface OrderBookConfig {
   Address: string
   Id: BigNumber
+}
+
+export interface OrderBookTick {
   SizeTick: BigNumber
   PriceTick: BigNumber
 }

@@ -1,8 +1,8 @@
 import {task} from 'hardhat/config'
 import {boolean} from 'hardhat/internal/core/params/argumentTypes'
 import {BigNumber} from 'ethers'
-import {OrderBookConfig, OrderBookKey, getLighterConfig, parseBaseAmount, parseBasePrice} from '../config'
-import {isSuccessful, getRouterAt} from '../shared'
+import {OrderBookConfig, OrderBookKey, getLighterConfig} from '../config'
+import {isSuccessful, getRouterAt, getTokenPrecisions, getOrderBookTicksFromAddress, parseBaseAmount, parseBasePrice} from '../shared'
 import {CreateOrderEvent, getCreateOrderEvent} from '../shared/event-util'
 
 // WETH-USDC
@@ -19,8 +19,10 @@ task('createFillOrKillOrder')
     const lighterConfig = await getLighterConfig()
     const routerContract = getRouterAt(lighterConfig.Router, hre)
     const orderBookConfig = lighterConfig.OrderBooks[orderbookname as OrderBookKey] as OrderBookConfig
-    const amountBase = parseBaseAmount(amount, orderbookname as OrderBookKey, orderBookConfig)
-    const priceBase = parseBasePrice(price, orderbookname as OrderBookKey, orderBookConfig)
+    const tokenPrecisions = await getTokenPrecisions(orderBookConfig.Address, hre)
+    const tickInfo = await getOrderBookTicksFromAddress(orderBookConfig.Address, hre)
+    const amountBase = parseBaseAmount(amount, tokenPrecisions.token0Precision, tickInfo.SizeTick)
+    const priceBase = parseBasePrice(price, tokenPrecisions.token1Precision, tickInfo.PriceTick)
     const tx = await (
       await routerContract
     ).createFoKOrder(orderBookConfig.Id as BigNumber, amountBase, priceBase, isask)
@@ -56,8 +58,10 @@ task('createI0COrder')
     const lighterConfig = await getLighterConfig()
     const routerContract = getRouterAt(lighterConfig.Router, hre)
     const orderBookConfig = lighterConfig.OrderBooks[orderbookname as OrderBookKey] as OrderBookConfig
-    const amountBase = parseBaseAmount(amount, orderbookname as OrderBookKey, orderBookConfig)
-    const priceBase = parseBasePrice(price, orderbookname as OrderBookKey, orderBookConfig)
+    const tokenPrecisions = await getTokenPrecisions(orderBookConfig.Address, hre)
+    const tickInfo = await getOrderBookTicksFromAddress(orderBookConfig.Address, hre)
+    const amountBase = parseBaseAmount(amount, tokenPrecisions.token0Precision, tickInfo.SizeTick)
+    const priceBase = parseBasePrice(price, tokenPrecisions.token1Precision, tickInfo.PriceTick)
     const tx = await (
       await routerContract
     ).createIoCOrder(orderBookConfig.Id as BigNumber, amountBase, priceBase, isask)
@@ -93,8 +97,10 @@ task('createLimitOrder')
     const lighterConfig = await getLighterConfig()
     const routerContract = getRouterAt(lighterConfig.Router, hre)
     const orderBookConfig = lighterConfig.OrderBooks[orderbookname as OrderBookKey] as OrderBookConfig
-    const amountBase = parseBaseAmount(amount, orderbookname as OrderBookKey, orderBookConfig)
-    const priceBase = parseBasePrice(price, orderbookname as OrderBookKey, orderBookConfig)
+    const tokenPrecisions = await getTokenPrecisions(orderBookConfig.Address, hre)
+    const tickInfo = await getOrderBookTicksFromAddress(orderBookConfig.Address, hre)
+    const amountBase = parseBaseAmount(amount, tokenPrecisions.token0Precision, tickInfo.SizeTick)
+    const priceBase = parseBasePrice(price, tokenPrecisions.token1Precision, tickInfo.PriceTick)
     const tx = await (
       await routerContract
     ).createLimitOrder(orderBookConfig.Id as BigNumber, amountBase, priceBase, isask, 0)
