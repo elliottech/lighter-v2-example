@@ -1,6 +1,6 @@
 import {ethers, network} from 'hardhat'
 import {IFactory, SwapWallet} from '../typechain-types'
-import {deployTokens, ParseUSDC, getFactoryAt, ParseWETH} from './shared'
+import {deployTokens, ParseUSDC, getFactoryAt, ParseWETH, resetTestnet} from './shared'
 import {fundAccount} from './token'
 import {getLighterConfig} from '../config'
 import {expect} from 'chai'
@@ -13,17 +13,7 @@ async function deploySwapWallet(factory: IFactory) {
 describe('Swap wallet', async () => {
   beforeEach(async function () {
     // TODO: Use mainnet fork when contracts are deployed
-    await network.provider.request({
-      method: 'hardhat_reset',
-      params: [
-        {
-          forking: {
-            jsonRpcUrl: `https://rpc.goerli.arbitrum.gateway.fm/`,
-            blockNumber: 42443400,
-          },
-        },
-      ],
-    })
+    await resetTestnet()
   })
 
   it('it swaps exact input USDC for WETH', async () => {
