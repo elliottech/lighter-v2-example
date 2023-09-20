@@ -1,4 +1,4 @@
-import {ethers, network} from 'hardhat'
+import {ethers} from 'hardhat'
 import {IFactory, IOrderBook, MarketMakingWallet} from '../typechain-types'
 import {deployTokens, ParseUSDC, getFactoryAt, ParseWETH, getOrderBookAt, resetTestnet} from './shared'
 import {fundAccount} from './token'
@@ -54,7 +54,7 @@ describe('Swap wallet', async () => {
     const amount = ParseWETH(1)
     const price = ParseUSDC(2000)
 
-    await wallet.createLimitOrder(0, 1, [amount], [price], [true], [0])
+    await wallet.createLimitOrder(0, amount, price, true, 0)
     await expectOrderBook(orderBook, [37, 35, 0], [36, 29, 31, 30, 0])
 
     // getLimitOrder does not return amounts, but number of ticks (amount0Base and priceBase)
@@ -71,7 +71,7 @@ describe('Swap wallet', async () => {
     const amount = ParseWETH(1)
     const price = ParseUSDC(2000)
 
-    await wallet.createLimitOrder(0, 1, [amount], [price], [false], [0])
+    await wallet.createLimitOrder(0, amount, price, false, 0)
     await expectOrderBook(orderBook, [35, 0], [37, 36, 29, 31, 30, 0])
 
     // getLimitOrder does not return amounts, but number of ticks (amount0Base and priceBase)
@@ -88,10 +88,10 @@ describe('Swap wallet', async () => {
     const amount = ParseWETH(1)
     const price = ParseUSDC(2000)
 
-    await wallet.createLimitOrder(0, 1, [amount], [price], [false], [0])
+    await wallet.createLimitOrder(0, amount, price, false, 0)
     await expectOrderBook(orderBook, [35, 0], [37, 36, 29, 31, 30, 0])
 
-    await wallet.cancelLimitOrder(0, 1, [37])
+    await wallet.cancelLimitOrder(0, 37)
     await expectOrderBook(orderBook, [35, 0], [36, 29, 31, 30, 0])
   })
 
