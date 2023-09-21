@@ -4,7 +4,7 @@ import * as IERC20MetadataABI from '../artifacts/@openzeppelin/contracts/token/E
 import {HardhatRuntimeEnvironment} from 'hardhat/types'
 import {IOrderBook, IRouter} from '../typechain-types'
 import {IERC20Metadata} from '../typechain-types/extensions/IERC20Metadata'
-import {OrderBookConfig, OrderBookTick} from '../config'
+import {OrderBookConfig} from '../config'
 import {BigNumber} from 'ethers'
 
 export enum OrderType {

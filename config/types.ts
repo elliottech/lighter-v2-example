@@ -37,8 +37,3 @@ export interface OrderBookConfig {
   sizeTick: BigNumber
   priceTick: BigNumber
 }
-
-export interface OrderBookTick {
-  SizeTick: BigNumber
-  PriceTick: BigNumber
-}
