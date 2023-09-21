@@ -14,7 +14,7 @@ export enum OrderType {
 }
 
 // Function to get the string representation of an enum value
-function getOrderTypeString(value: OrderType): string {
+export const getOrderTypeString = (value: OrderType): string => {
   switch (value) {
     case OrderType.LimitOrder:
       return 'LimitOrder'

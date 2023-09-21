@@ -1,5 +1,5 @@
 import {task} from 'hardhat/config'
-import {boolean} from 'hardhat/internal/core/params/argumentTypes'
+import {boolean, int} from 'hardhat/internal/core/params/argumentTypes'
 import {BigNumber} from 'ethers'
 import {OrderBookConfig, OrderBookKey, getLighterConfig} from '../config'
 import {
@@ -10,6 +10,7 @@ import {
   parseBaseAmount,
   parseBasePrice,
   OrderType,
+  getOrderTypeString,
 } from '../shared'
 import {CreateOrderEvent, getCreateOrderEvent} from '../shared/event-util'
 import {HardhatRuntimeEnvironment} from 'hardhat/types'
@@ -59,6 +60,8 @@ export const executeOrderCreation = async (
       throw new Error(`Failed to execute createOrder Request - Invalid/Unsupported OrderType`)
   }
 
+  const orderTypeDescription = getOrderTypeString(orderType)
+
   await tx.wait()
   const successIndicator = await isSuccessful(hre.ethers.provider, tx.hash)
 
@@ -70,50 +73,33 @@ export const executeOrderCreation = async (
       hre
     )
     console.log(
-      `Create-Order Transaction: ${tx.hash} is successful and OrderEvent: ${JSON.stringify(
+      `Create-${orderTypeDescription} Transaction: ${tx.hash} is successful and OrderEvent: ${JSON.stringify(
         createOrderEvent,
         null,
         2
       )} emitted`
     )
   } else {
-    console.log(`Create-Order Transaction: ${tx.hash} failed`)
+    console.log(`Create-${orderTypeDescription} Transaction: ${tx.hash} failed`)
   }
 }
 
-// WETH-USDC
-//amount = 0.2 to be parsed as amount0Base = 20 * 10**18 / 10**14 = 20 * 10**4 = 200000
-//price = 1975.55 USDC to be parsed as priceBase = 1975.55 * 10**6 / 10**4 = 1975.55 * 10**2 = 197555
-// npx hardhat createFillOrKillOrder --orderbookname WETH-USDC --amount 0.2 --price 1975.55 --isask true --network arbgoerli
-task('createFillOrKillOrder')
+// create limit-order
+// npx hardhat createOrder --orderbookname WETH-USDC --ordertype 0 --amount 0.2 --price 1975.55 --isask true --network arbgoerli
+// npx hardhat createOrder --orderbookname WETH-USDC --amount 0.2 --price 1975.55 --isask true --network arbgoerli
+
+//create fillOrKill-order
+// npx hardhat createOrder --orderbookname WETH-USDC --ordertype 2 --amount 0.2 --price 1975.55 --isask false --network arbgoerli
+
+//create ioc-order
+// npx hardhat createOrder --orderbookname WETH-USDC --ordertype 3 --amount 0.2 --price 1975.55 --isask false --network arbgoerli
+task('createOrder')
   .addParam('orderbookname')
+  .addParam('ordertype', 'orderType can take values: 0 for fokOrder, 1 for iocOrder and 2 for limitOrder', 2, int, true)
   .addParam('amount')
   .addParam('price')
   .addParam('isask', 'whatever or not order is ask', null, boolean)
   .setDescription('create FillOrKill Order via Router')
-  .setAction(async ({orderbookname, amount, price, isask}, hre) => {
-    await executeOrderCreation(orderbookname, OrderType.FoKOrder, amount, price, isask, hre)
-  })
-
-task('createI0COrder')
-  .addParam('orderbookname')
-  .addParam('amount')
-  .addParam('price')
-  .addParam('isask', 'whatever or not order is ask', null, boolean)
-  .setDescription('create IoC-Order via Router')
-  .setAction(async ({orderbookname, amount, price, isask}, hre) => {
-    await executeOrderCreation(orderbookname, OrderType.IoCOrder, amount, price, isask, hre)
-  })
-
-//amount = 0.2 to be parsed as amount0Base = 20 * 10**18 / 10**14 = 20 * 10**4 = 200000
-//price = 1975.55 USDC to be parsed as priceBase = 1975.55 * 10**6 / 10**4 = 1975.55 * 10**2 = 197555
-// npx hardhat createLimitOrder --orderbookname WETH-USDC --amount 0.2 --price 1975.55 --isask true --network arbgoerli
-task('createLimitOrder')
-  .addParam('orderbookname')
-  .addParam('amount')
-  .addParam('price')
-  .addParam('isask', 'whatever or not order is ask', null, boolean)
-  .setDescription('create Limit-Order via Router')
-  .setAction(async ({orderbookname, amount, price, isask}, hre) => {
-    await executeOrderCreation(orderbookname, OrderType.LimitOrder, amount, price, isask, hre)
+  .setAction(async ({orderbookname, ordertype, amount, price, isask}, hre) => {
+    await executeOrderCreation(orderbookname, ordertype as OrderType, amount, price, isask, hre)
   })
