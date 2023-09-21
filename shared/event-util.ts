@@ -3,15 +3,13 @@ import {Provider} from '@ethersproject/providers'
 import {OrderType, getOrderBookAt, getOrderTypeFromValue, getTransactionReceipt} from '../shared'
 import {BigNumber, ethers} from 'ethers'
 
-export class CreateOrderEvent {
-  constructor(
-    public owner: string,
-    public id: BigNumber,
-    public amount0Base: BigNumber,
-    public priceBase: BigNumber,
-    public isAsk: boolean,
-    public orderType: OrderType
-  ) {}
+export interface CreateOrderEvent {
+  owner: string
+  id: BigNumber
+  amount0Base: BigNumber
+  priceBase: BigNumber
+  isAsk: boolean
+  orderType: OrderType
 }
 
 export const getCreateOrderEvent = async (
@@ -74,14 +72,14 @@ export const getCreateOrderEvent = async (
     throw new Error(`Invalid eventData`)
   }
 
-  return new CreateOrderEvent(
-    eventData.args[0].toString(),
-    BigNumber.from(eventData.args[1].toString()),
-    BigNumber.from(eventData.args[2].toString()),
-    BigNumber.from(eventData.args[3].toString()),
-    eventData.args[4],
-    getOrderTypeFromValue(parseInt(eventData.args[5]))
-  )
+  return {
+    owner: eventData.args[0].toString(),
+    id: BigNumber.from(eventData.args[1].toString()),
+    amount0Base: BigNumber.from(eventData.args[2].toString()),
+    priceBase: BigNumber.from(eventData.args[3].toString()),
+    isAsk: eventData.args[4],
+    orderType: getOrderTypeFromValue(parseInt(eventData.args[5])),
+  }
 }
 
 class SwapExactAmountEvent {
