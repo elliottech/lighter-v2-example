@@ -1,10 +1,10 @@
 import {task, types} from 'hardhat/config'
 import {BigNumber} from 'ethers'
-import {OrderBookKey, getLighterConfig} from '../config'
+import {Order, OrderBookKey, OrderData, getLighterConfig, orderDataToString, orderToString} from '../config'
 import {OrderType, getOrderBookAt} from '../shared'
 import {IOrderBook} from '../typechain-types'
 
-// npx hardhat getOrderDetails --orderbookname WBTC-USDC --orderid 3 --network arbgoerli
+// npx hardhat getOrderDetails --orderbookname WBTC-USDC --orderid 26 --network arbgoerli
 task('getOrderDetails')
   .addParam('orderbookname')
   .addParam('orderid')
@@ -15,9 +15,9 @@ task('getOrderDetails')
     const order = await getOrderDetails(orderBookContract, BigNumber.from(orderid))
     if (!order) {
       console.error(`Order with id: ${orderid} doesnot exist`)
+    } else {
+      console.log(`${orderToString(order)}`)
     }
-
-    console.log(`order-details for orderId: ${orderid} are: ${JSON.stringify(order)}`)
   })
 
 // npx hardhat getAllLimitOrders --orderbookname WBTC-USDC --limit 10 --network arbgoerli
@@ -30,7 +30,7 @@ task('getAllLimitOrders')
     const orderBookAddress = lighterConfig.OrderBooks[orderbookname as OrderBookKey] as string
     const orderBookContract = await getOrderBookAt(orderBookAddress, hre)
     const orderData: OrderData = await getAllLimitOrders(orderBookContract, BigNumber.from(0), parseInt(limit))
-    console.log(`orderData queried: ${JSON.stringify(orderData)}`)
+    console.log(`orderData queried: ${orderDataToString(orderData)}`)
   })
 
 // npx hardhat getAllLimitOrdersOfAnAccount --orderbookname WBTC-USDC --account '0xd057E08695d1843FC21F27bBd0Af5D4B06203F48' --network arbgoerli
@@ -48,26 +48,8 @@ task('getAllLimitOrdersOfAnAccount')
       BigNumber.from(0),
       parseInt(limit)
     )
-    console.log(`orderData queried: ${JSON.stringify(orderData)}`)
+    console.log(`orderData queried: ${orderDataToString(orderData)}`)
   })
-
-export interface Order {
-  id: BigNumber
-  isAsk: boolean
-  owner: string
-  amount0: BigNumber
-  price: BigNumber
-  orderType: OrderType
-}
-
-export interface OrderData {
-  limit: number
-  orderCount: number
-  askOrderCount: number
-  bidOrderCount: number
-  askOrders: Order[]
-  bidOrders: Order[]
-}
 
 export const getAllLimitOrdersOfAnAccount = async (
   orderBookContract: IOrderBook,
@@ -102,12 +84,18 @@ export const getOrderDetails = async (
   orderBookContract: IOrderBook,
   orderId: BigNumber
 ): Promise<Order | undefined> => {
-  const orderData: OrderData = await getAllLimitOrders(orderBookContract, orderId, 1)
-  console.log(`orderData is: ${JSON.stringify(orderData)}`)
+  const orderData: OrderData = await getAllLimitOrders(orderBookContract, BigNumber.from(0), 1000)
+
   if (orderData.askOrderCount > 0) {
-    return orderData.askOrders[0]
+    const matchedAskOrder = orderData.askOrders.find((order) => order.id.eq(orderId))
+    if (matchedAskOrder) {
+      return matchedAskOrder
+    }
   } else if (orderData.bidOrderCount > 0) {
-    return orderData.bidOrders[0]
+    const matchedBidOrder = orderData.bidOrders.find((order) => order.id.eq(orderId))
+    if (matchedBidOrder) {
+      return matchedBidOrder
+    }
   }
 }
 
@@ -120,12 +108,14 @@ export const getAllLimitOrders = async (
   let askOrderCount: number = 0,
     bidOrderCount: number = 0
   const askOrders = await getAllLimitOrdersBySide(orderBookContract, startOrderId, true, limit)
+
   if (askOrders) {
     orders.push(...askOrders)
     askOrderCount = askOrders.length
   }
 
   const bidOrders = await getAllLimitOrdersBySide(orderBookContract, startOrderId, false, limit)
+
   if (bidOrders) {
     orders.push(...bidOrders)
     bidOrderCount = bidOrders.length
@@ -140,8 +130,13 @@ export const getAllLimitOrdersBySide = async (
   isAsk: boolean,
   limit: number
 ): Promise<Order[]> => {
-  const orderData = await orderBookContract.getPaginatedOrders(startOrderId, isAsk, limit)
-  return parseOrders(isAsk, orderData)
+  let orderData = {}
+  try {
+    orderData = await orderBookContract.getPaginatedOrders(startOrderId, isAsk, limit)
+    return parseOrders(isAsk, orderData)
+  } catch (error) {
+    return []
+  }
 }
 
 export const parseOrders = (isAsk: boolean, orderData: IOrderBook.OrderQueryItemStructOutput): Order[] => {
