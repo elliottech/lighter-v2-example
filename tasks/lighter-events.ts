@@ -10,13 +10,13 @@ task('getCreateOrderEvent')
   .setAction(async ({orderbookname, transactionhash}, hre) => {
     const lighterConfig = await getLighterConfig()
     const orderBookConfig = lighterConfig.OrderBooks[orderbookname as OrderBookKey] as OrderBookConfig
-    const createOrderEvent: CreateOrderEvent = await getCreateOrderEvent(
+    const createOrderEvents: CreateOrderEvent[] = await getCreateOrderEvent(
       hre.ethers.provider,
       orderBookConfig.Address,
       transactionhash,
       hre
     )
     console.log(
-      `OrderEvent: ${JSON.stringify(createOrderEvent, null, 2)} emitted for transactionHash: ${transactionhash}`
+      `OrderEvent: ${JSON.stringify(createOrderEvents, null, 2)} emitted for transactionHash: ${transactionhash}`
     )
   })

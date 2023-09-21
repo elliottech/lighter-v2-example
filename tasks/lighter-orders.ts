@@ -66,7 +66,7 @@ export const executeOrderCreation = async (
   const successIndicator = await isSuccessful(hre.ethers.provider, tx.hash)
 
   if (successIndicator) {
-    const createOrderEvent: CreateOrderEvent = await getCreateOrderEvent(
+    const createOrderEvents: CreateOrderEvent[] = await getCreateOrderEvent(
       hre.ethers.provider,
       orderBookConfig.Address,
       tx.hash,
@@ -74,7 +74,7 @@ export const executeOrderCreation = async (
     )
     console.log(
       `Create-${orderTypeDescription} Transaction: ${tx.hash} is successful and OrderEvent: ${JSON.stringify(
-        createOrderEvent,
+        createOrderEvents[0],
         null,
         2
       )} emitted`

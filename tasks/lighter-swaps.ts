@@ -3,6 +3,7 @@ import {boolean} from 'hardhat/internal/core/params/argumentTypes'
 import {BigNumber} from 'ethers'
 import {OrderBookConfig, OrderBookKey, getLighterConfig} from '../config'
 import {isSuccessful, getRouterAt, getSwapExactAmountEvent, getTokenPrecisions, parseAmount} from '../shared'
+import {SwapExactAmountEvent} from 'typechain-types/@elliottech/lighter-v2-core/contracts/interfaces/IOrderBook'
 
 // WETH-USDC
 //exact-input-amount of WETH = 1
@@ -37,18 +38,13 @@ task('swapExactInputSingle')
     const successIndicator = await isSuccessful(hre.ethers.provider, tx.hash)
 
     if (successIndicator) {
-      const swapExactAmountEvent = await getSwapExactAmountEvent(
-        hre.ethers.provider,
-        orderBookConfig.Address,
-        tx.hash,
-        hre
-      )
+      const swapExactAmountEvents = await getSwapExactAmountEvent(orderBookConfig.Address, tx.hash, hre)
 
       console.log(
         `swapExactInputSingle Transaction: ${
           tx.hash
         } is successful on OrderBook: ${orderbookname} and SwapExactAmount: ${JSON.stringify(
-          swapExactAmountEvent,
+          swapExactAmountEvents,
           null,
           2
         )} emitted`
@@ -98,18 +94,13 @@ task('swapExactOutputSingle')
     const successIndicator = await isSuccessful(hre.ethers.provider, tx.hash)
 
     if (successIndicator) {
-      const swapExactAmountEvent = await getSwapExactAmountEvent(
-        hre.ethers.provider,
-        orderBookConfig.Address,
-        tx.hash,
-        hre
-      )
+      const swapExactAmountEvents = await getSwapExactAmountEvent(orderBookConfig.Address, tx.hash, hre)
 
       console.log(
         `swapExactOutputSingle Transaction: ${
           tx.hash
         } is successful on OrderBook: ${orderbookname} and SwapExactAmount: ${JSON.stringify(
-          swapExactAmountEvent,
+          swapExactAmountEvents,
           null,
           2
         )} emitted`

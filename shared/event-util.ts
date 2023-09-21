@@ -17,7 +17,7 @@ export const getCreateOrderEvent = async (
   orderBookAddress: string,
   transactionHash: string,
   hre: any
-): Promise<CreateOrderEvent> => {
+): Promise<CreateOrderEvent[]> => {
   if (!orderBookAddress) {
     throw new Error(`Invalid orderBookAddress`)
   }
@@ -66,8 +66,10 @@ export const getCreateOrderEvent = async (
     throw new Error(`Failed to lookup for CreateOrder Event`)
   }
 
-  const eventData = decodedEventLogs[0]
+  return decodedEventLogs.map((eventData) => parseCreateOrderEventData(eventData))
+}
 
+export const parseCreateOrderEventData = (eventData: ethers.utils.LogDescription): CreateOrderEvent => {
   if (!eventData || !eventData.args || eventData.args.length != 6) {
     throw new Error(`Invalid eventData`)
   }
@@ -82,23 +84,20 @@ export const getCreateOrderEvent = async (
   }
 }
 
-class SwapExactAmountEvent {
-  constructor(
-    public sender: string,
-    public recipient: string,
-    public isExactInput: boolean,
-    public isAsk: boolean,
-    public swapAmount0: BigNumber,
-    public swapAmount1: BigNumber
-  ) {}
+interface SwapExactAmountEvent {
+  sender: string
+  recipient: string
+  isExactInput: boolean
+  isAsk: boolean
+  swapAmount0: BigNumber
+  swapAmount1: BigNumber
 }
 
 export const getSwapExactAmountEvent = async (
-  provider: Provider,
   orderBookAddress: string,
   transactionHash: string,
   hre: any
-): Promise<SwapExactAmountEvent> => {
+): Promise<SwapExactAmountEvent[]> => {
   if (!orderBookAddress) {
     throw new Error(`Invalid orderBookAddress`)
   }
@@ -147,18 +146,16 @@ export const getSwapExactAmountEvent = async (
     throw new Error(`Failed to lookup for SwapExactAmount Event`)
   }
 
-  const eventData = decodedEventLogs[0]
+  return decodedEventLogs.map((eventData) => parseSwapExactAmountEventData(eventData))
+}
 
-  if (!eventData || !eventData.args || eventData.args.length != 6) {
-    throw new Error(`Invalid SwapExactAmount EventData`)
+export const parseSwapExactAmountEventData = (eventData: ethers.utils.LogDescription): SwapExactAmountEvent => {
+  return {
+    sender: eventData.args[0].toString(),
+    recipient: eventData.args[1].toString(),
+    isExactInput: eventData.args[2].toString(),
+    isAsk: eventData.args[3].toString(),
+    swapAmount0: BigNumber.from(eventData.args[4]),
+    swapAmount1: BigNumber.from(eventData.args[5]),
   }
-
-  return new SwapExactAmountEvent(
-    eventData.args[0].toString(),
-    eventData.args[1].toString(),
-    eventData.args[2].toString(),
-    eventData.args[3].toString(),
-    BigNumber.from(eventData.args[4]),
-    BigNumber.from(eventData.args[5])
-  )
 }
