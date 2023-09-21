@@ -28,7 +28,7 @@ export const getCreateOrderEvent = async (
     throw new Error(`Invalid transactionHash`)
   }
 
-  if (!provider || provider._isProvider) {
+  if (!provider || !provider._isProvider) {
     throw new Error(`Invalid provider`)
   }
 

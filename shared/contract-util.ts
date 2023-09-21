@@ -5,7 +5,6 @@ import {HardhatRuntimeEnvironment} from 'hardhat/types'
 import {IOrderBook, IRouter} from '../typechain-types'
 import {IERC20Metadata} from '../typechain-types/extensions/IERC20Metadata'
 import {OrderBookTick} from '../config'
-import {BigNumber} from 'ethers'
 
 export enum OrderType {
   LimitOrder,
@@ -65,7 +64,7 @@ export const getOrderBookTicksFromAddress = async (
 
 export const getOrderBookTicks = async (orderBookContract: IOrderBook): Promise<OrderBookTick> => {
   const SizeTick = await orderBookContract.sizeTick()
-  const PriceTick = await orderBookContract.sizeTick()
+  const PriceTick = await orderBookContract.priceTick()
   return {SizeTick, PriceTick}
 }
 
