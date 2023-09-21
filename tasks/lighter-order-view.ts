@@ -1,8 +1,7 @@
 import {task, types} from 'hardhat/config'
 import {BigNumber} from 'ethers'
-import {Order, OrderBookKey, OrderData, getLighterConfig, orderDataToString, orderToString} from '../config'
-import {OrderType, getAllLimitOrders, getAllLimitOrdersOfAnAccount, getOrderBookAt, getOrderDetails} from '../shared'
-import {IOrderBook} from '../typechain-types'
+import {OrderBookKey, OrderData, getLighterConfig, orderDataToString, orderToString} from '../config'
+import {getAllLimitOrders, getAllLimitOrdersOfAnAccount, getOrderBookAt, getOrderDetails} from '../shared'
 
 // npx hardhat getOrderDetails --orderbookname WBTC-USDC --orderid 26 --network arbgoerli
 task('getOrderDetails')
