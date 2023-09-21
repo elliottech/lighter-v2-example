@@ -1,14 +1,7 @@
 import {task} from 'hardhat/config'
 import {boolean} from 'hardhat/internal/core/params/argumentTypes'
 import {OrderBookKey, getLighterConfig} from '../config'
-import {
-  isSuccessful,
-  getRouterAt,
-  getSwapExactAmountEvent,
-  getTokenPrecisions,
-  parseAmount,
-  getOrderBookConfigFromAddress,
-} from '../shared'
+import {isSuccessful, getRouterAt, getSwapExactAmountEvent, parseAmount, getOrderBookConfigFromAddress} from '../shared'
 
 // npx hardhat swapExactInputSingle --orderbookname WETH-USDC --isask false --exactinput 2000 --minoutput 1 --recipient '0xf5306fc60C48E3E2fBf9262D699Cb05C4910e6D9' --unwrap false --network arbgoerli
 task('swapExactInputSingle')
@@ -24,14 +17,13 @@ task('swapExactInputSingle')
     const routerContract = getRouterAt(lighterConfig.Router, hre)
     const orderBookAddress = lighterConfig.OrderBooks[orderbookname as OrderBookKey] as string
     const orderBookConfig = await getOrderBookConfigFromAddress(orderBookAddress, hre)
-    const tokenPrecisions = await getTokenPrecisions(orderBookAddress, hre)
     const exactInputAmount = parseAmount(
       exactinput,
-      isask ? tokenPrecisions.token0Precision : tokenPrecisions.token1Precision
+      isask ? orderBookConfig.token0Precision : orderBookConfig.token1Precision
     )
     const minOutputAmount = parseAmount(
       minoutput,
-      isask ? tokenPrecisions.token1Precision : tokenPrecisions.token0Precision
+      isask ? orderBookConfig.token1Precision : orderBookConfig.token0Precision
     )
     const tx = await (
       await routerContract
@@ -70,14 +62,13 @@ task('swapExactOutputSingle')
     const routerContract = getRouterAt(lighterConfig.Router, hre)
     const orderBookAddress = lighterConfig.OrderBooks[orderbookname as OrderBookKey] as string
     const orderBookConfig = await getOrderBookConfigFromAddress(orderBookAddress, hre)
-    const tokenPrecisions = await getTokenPrecisions(orderBookAddress, hre)
     const exactOutputAmount = parseAmount(
       exactoutput,
-      isask ? tokenPrecisions.token1Precision : tokenPrecisions.token0Precision
+      isask ? orderBookConfig.token1Precision : orderBookConfig.token0Precision
     )
     const maxInputAmount = parseAmount(
       maxinput,
-      isask ? tokenPrecisions.token0Precision : tokenPrecisions.token1Precision
+      isask ? orderBookConfig.token0Precision : orderBookConfig.token1Precision
     )
     const tx = await (
       await routerContract

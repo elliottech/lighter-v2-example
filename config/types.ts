@@ -34,6 +34,19 @@ export interface LighterConfig {
 
 export interface OrderBookConfig {
   orderBookId: BigNumber
+  nextOrderId: BigNumber
   sizeTick: BigNumber
   priceTick: BigNumber
+  priceMultiplier: BigNumber
+  priceDivider: BigNumber
+  minToken0BaseAmount: BigNumber
+  minToken1BaseAmount: BigNumber
+  token0Address: string
+  token0Symbol: string
+  token0Name: string
+  token0Precision: number
+  token1Address: string
+  token1Symbol: string
+  token1Name: string
+  token1Precision: number
 }

@@ -5,7 +5,6 @@ import {OrderBookKey, getLighterConfig} from '../config'
 import {
   isSuccessful,
   getRouterAt,
-  getTokenPrecisions,
   parseBaseAmount,
   parseBasePrice,
   OrderType,
@@ -27,12 +26,11 @@ export const executeOrderCreation = async (
   const routerContract = await getRouterAt(lighterConfig.Router, hre)
   const orderBookAddress = lighterConfig.OrderBooks[orderbookname as OrderBookKey] as string
   const orderBookConfig = await getOrderBookConfigFromAddress(orderBookAddress, hre)
-  const tokenPrecisions = await getTokenPrecisions(orderBookAddress, hre)
-  const amountBase = parseBaseAmount(amount, tokenPrecisions.token0Precision, orderBookConfig.sizeTick)
+  const amountBase = parseBaseAmount(amount, orderBookConfig.token0Precision, orderBookConfig.sizeTick)
   if (!amountBase || amountBase.eq(BigNumber.from(0))) {
     throw new Error(`Invalid amountBase ${amountBase}`)
   }
-  const priceBase = parseBasePrice(price, tokenPrecisions.token1Precision, orderBookConfig.priceTick)
+  const priceBase = parseBasePrice(price, orderBookConfig.token1Precision, orderBookConfig.priceTick)
   if (!priceBase || priceBase.eq(BigNumber.from(0))) {
     throw new Error(`Invalid PriceBase ${priceBase}`)
   }
