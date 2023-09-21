@@ -5,7 +5,7 @@ const lighterConfigs: {
   [ChainId: string]: LighterConfig
 } = {
   [ChainId.ARBITRUM_GOERLI]: {
-    Router: '0x42E138965BaCDdF6E1fb2774C55ab84b471c0ab7',
+    Router: '0xBaDEd09099fFfBfFDc07896A632dBC7e1BE41c66',
     Factory: '0xB15457ea816677564145AF39D92A9aE68fde1E96',
     OrderBooks: {
       [OrderBookKey.WETH_USDC]: '0x5Fd98c554B29E0DE9DcF09eEd3339367C62b2606',
