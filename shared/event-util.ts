@@ -13,7 +13,6 @@ export interface CreateOrderEvent {
 }
 
 export const getCreateOrderEvent = async (
-  provider: Provider,
   orderBookAddress: string,
   transactionHash: string,
   hre: any
@@ -25,6 +24,8 @@ export const getCreateOrderEvent = async (
   if (!transactionHash) {
     throw new Error(`Invalid transactionHash`)
   }
+
+  const provider: Provider = hre.ethers.provider
 
   if (!provider || !provider._isProvider) {
     throw new Error(`Invalid provider`)
@@ -106,7 +107,9 @@ export const getSwapExactAmountEvent = async (
     throw new Error(`Invalid transactionHash`)
   }
 
-  if (!provider || provider._isProvider) {
+  const provider: Provider = hre.ethers.provider
+
+  if (!provider || !provider._isProvider) {
     throw new Error(`Invalid provider`)
   }
 

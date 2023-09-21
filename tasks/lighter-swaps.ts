@@ -9,7 +9,7 @@ import {SwapExactAmountEvent} from 'typechain-types/@elliottech/lighter-v2-core/
 //exact-input-amount of WETH = 1
 //min-output-amount of USDC = 1950
 // isAsk = true
-// npx hardhat swapExactInputSingle --orderBookName WETH-USDC --isask true --exactInput 0.2 --minOutput 1950 --recipient '' --unwrap false --network arbgoerli
+// npx hardhat swapExactInputSingle --orderbookname WETH-USDC --isask false --exactinput 2000 --minoutput 1 --recipient '0xf5306fc60C48E3E2fBf9262D699Cb05C4910e6D9' --unwrap false --network arbgoerli
 task('swapExactInputSingle')
   .addParam('orderbookname')
   .addParam('isask', 'whatever or not order is ask', null, boolean)

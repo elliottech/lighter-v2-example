@@ -66,12 +66,7 @@ export const executeOrderCreation = async (
   const successIndicator = await isSuccessful(hre.ethers.provider, tx.hash)
 
   if (successIndicator) {
-    const createOrderEvents: CreateOrderEvent[] = await getCreateOrderEvent(
-      hre.ethers.provider,
-      orderBookConfig.Address,
-      tx.hash,
-      hre
-    )
+    const createOrderEvents: CreateOrderEvent[] = await getCreateOrderEvent(orderBookConfig.Address, tx.hash, hre)
     console.log(
       `Create-${orderTypeDescription} Transaction: ${tx.hash} is successful and OrderEvent: ${JSON.stringify(
         createOrderEvents[0],
@@ -85,7 +80,7 @@ export const executeOrderCreation = async (
 }
 
 // create limit-order
-// npx hardhat createOrder --orderbookname WETH-USDC --ordertype 0 --amount 0.2 --price 1975.55 --isask true --network arbgoerli
+// npx hardhat createOrder --orderbookname WETH-USDC --ordertype 0 --amount 1 --price 2000 --isask true --network arbgoerli
 // npx hardhat createOrder --orderbookname WETH-USDC --amount 0.2 --price 1975.55 --isask true --network arbgoerli
 
 //create fillOrKill-order
