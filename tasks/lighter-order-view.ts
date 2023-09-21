@@ -4,6 +4,22 @@ import {OrderBookKey, getLighterConfig} from '../config'
 import {OrderType, getOrderBookAt} from '../shared'
 import {IOrderBook} from '../typechain-types'
 
+// npx hardhat getOrderDetails --orderbookname WBTC-USDC --orderid 3 --network arbgoerli
+task('getOrderDetails')
+  .addParam('orderbookname')
+  .addParam('orderid')
+  .setAction(async ({orderbookname, orderid}, hre) => {
+    const lighterConfig = await getLighterConfig()
+    const orderBookAddress = lighterConfig.OrderBooks[orderbookname as OrderBookKey] as string
+    const orderBookContract = await getOrderBookAt(orderBookAddress, hre)
+    const order = await getOrderDetails(orderBookContract, BigNumber.from(orderid))
+    if (!order) {
+      console.error(`Order with id: ${orderid} doesnot exist`)
+    }
+
+    console.log(`order-details for orderId: ${orderid} are: ${JSON.stringify(order)}`)
+  })
+
 // npx hardhat getAllLimitOrders --orderbookname WBTC-USDC --limit 10 --network arbgoerli
 // npx hardhat getAllLimitOrders --orderbookname WBTC-USDC --network arbgoerli
 task('getAllLimitOrders')
@@ -35,26 +51,22 @@ task('getAllLimitOrdersOfAnAccount')
     console.log(`orderData queried: ${JSON.stringify(orderData)}`)
   })
 
-export class Order {
-  constructor(
-    public id: BigNumber,
-    public isAsk: boolean,
-    public owner: string,
-    public amount0: BigNumber,
-    public price: BigNumber,
-    public orderType: OrderType
-  ) {}
+export interface Order {
+  id: BigNumber
+  isAsk: boolean
+  owner: string
+  amount0: BigNumber
+  price: BigNumber
+  orderType: OrderType
 }
 
-export class OrderData {
-  constructor(
-    public limit: number,
-    public orderCount: number,
-    public askOrderCount: number,
-    public bidOrderCount: number,
-    public askOrders: Order[],
-    public bidOrders: Order[]
-  ) {}
+export interface OrderData {
+  limit: number
+  orderCount: number
+  askOrderCount: number
+  bidOrderCount: number
+  askOrders: Order[]
+  bidOrders: Order[]
 }
 
 export const getAllLimitOrdersOfAnAccount = async (
@@ -83,7 +95,20 @@ export const getAllLimitOrdersOfAnAccount = async (
     bidOrderCount = bidOrders.length
   }
 
-  return new OrderData(limit, askOrderCount + bidOrderCount, askOrderCount, bidOrderCount, askOrders, bidOrders)
+  return {limit, orderCount: askOrderCount + bidOrderCount, askOrderCount, bidOrderCount, askOrders, bidOrders}
+}
+
+export const getOrderDetails = async (
+  orderBookContract: IOrderBook,
+  orderId: BigNumber
+): Promise<Order | undefined> => {
+  const orderData: OrderData = await getAllLimitOrders(orderBookContract, orderId, 1)
+  console.log(`orderData is: ${JSON.stringify(orderData)}`)
+  if (orderData.askOrderCount > 0) {
+    return orderData.askOrders[0]
+  } else if (orderData.bidOrderCount > 0) {
+    return orderData.bidOrders[0]
+  }
 }
 
 export const getAllLimitOrders = async (
@@ -106,7 +131,7 @@ export const getAllLimitOrders = async (
     bidOrderCount = bidOrders.length
   }
 
-  return new OrderData(limit, askOrderCount + bidOrderCount, askOrderCount, bidOrderCount, askOrders, bidOrders)
+  return {limit, orderCount: askOrderCount + bidOrderCount, askOrderCount, bidOrderCount, askOrders, bidOrders}
 }
 
 export const getAllLimitOrdersBySide = async (
@@ -132,7 +157,7 @@ export const parseOrders = (isAsk: boolean, orderData: IOrderBook.OrderQueryItem
     const price = BigNumber.from(prices[i].toString())
 
     if (owner !== '0x0000000000000000000000000000000000000000') {
-      orders.push(new Order(id, isAsk, owner, amount0, price, OrderType.LimitOrder))
+      orders.push({id, isAsk, owner, amount0, price, orderType: OrderType.LimitOrder})
     }
   }
 
