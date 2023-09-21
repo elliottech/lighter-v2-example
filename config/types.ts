@@ -26,15 +26,16 @@ export enum ChainId {
 export interface LighterConfig {
   Router: string
   Factory: string
-  OrderBooks: Partial<Record<OrderBookKey, OrderBookConfig>>
+  OrderBooks: Record<OrderBookKey, string>
   Tokens: Partial<Record<Token, string>>
   Vault: Partial<Record<Token, string>>
   AAVEPool: string
 }
 
 export interface OrderBookConfig {
-  Address: string
-  Id: BigNumber
+  orderBookId: BigNumber
+  sizeTick: BigNumber
+  priceTick: BigNumber
 }
 
 export interface OrderBookTick {

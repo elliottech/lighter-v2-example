@@ -1,6 +1,6 @@
 import {task, types} from 'hardhat/config'
 import {BigNumber} from 'ethers'
-import {OrderBookConfig, OrderBookKey, getLighterConfig} from '../config'
+import {OrderBookKey, getLighterConfig} from '../config'
 import {OrderType, getOrderBookAt} from '../shared'
 import {IOrderBook} from '../typechain-types'
 
@@ -11,8 +11,8 @@ task('getAllLimitOrders')
   .addOptionalParam('limit', 'limit for the order-query', 100, types.int)
   .setAction(async ({orderbookname, limit}, hre) => {
     const lighterConfig = await getLighterConfig()
-    const orderBookConfig = lighterConfig.OrderBooks[orderbookname as OrderBookKey] as OrderBookConfig
-    const orderBookContract = await getOrderBookAt(orderBookConfig.Address, hre)
+    const orderBookAddress = lighterConfig.OrderBooks[orderbookname as OrderBookKey] as string
+    const orderBookContract = await getOrderBookAt(orderBookAddress, hre)
     const orderData: OrderData = await getAllLimitOrders(orderBookContract, BigNumber.from(0), parseInt(limit))
     console.log(`orderData queried: ${JSON.stringify(orderData)}`)
   })
@@ -24,8 +24,8 @@ task('getAllLimitOrdersOfAnAccount')
   .addOptionalParam('limit', 'limit for the order-query', 100, types.int)
   .setAction(async ({orderbookname, account, limit}, hre) => {
     const lighterConfig = await getLighterConfig()
-    const orderBookConfig = lighterConfig.OrderBooks[orderbookname as OrderBookKey] as OrderBookConfig
-    const orderBookContract = await getOrderBookAt(orderBookConfig.Address, hre)
+    const orderBookAddress = lighterConfig.OrderBooks[orderbookname as OrderBookKey] as string
+    const orderBookContract = await getOrderBookAt(orderBookAddress, hre)
     const orderData: OrderData = await getAllLimitOrdersOfAnAccount(
       orderBookContract,
       account,

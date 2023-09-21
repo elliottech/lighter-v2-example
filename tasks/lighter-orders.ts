@@ -1,16 +1,16 @@
 import {task} from 'hardhat/config'
 import {boolean, int} from 'hardhat/internal/core/params/argumentTypes'
 import {BigNumber} from 'ethers'
-import {OrderBookConfig, OrderBookKey, getLighterConfig} from '../config'
+import {OrderBookKey, getLighterConfig} from '../config'
 import {
   isSuccessful,
   getRouterAt,
   getTokenPrecisions,
-  getOrderBookTicksFromAddress,
   parseBaseAmount,
   parseBasePrice,
   OrderType,
   getOrderTypeString,
+  getOrderBookConfigFromAddress,
 } from '../shared'
 import {CreateOrderEvent, getCreateOrderEvent} from '../shared/event-util'
 import {HardhatRuntimeEnvironment} from 'hardhat/types'
@@ -25,15 +25,14 @@ export const executeOrderCreation = async (
 ) => {
   const lighterConfig = await getLighterConfig()
   const routerContract = await getRouterAt(lighterConfig.Router, hre)
-  const orderBookConfig = lighterConfig.OrderBooks[orderbookname as OrderBookKey] as OrderBookConfig
-
-  const tokenPrecisions = await getTokenPrecisions(orderBookConfig.Address, hre)
-  const tickInfo = await getOrderBookTicksFromAddress(orderBookConfig.Address, hre)
-  const amountBase = parseBaseAmount(amount, tokenPrecisions.token0Precision, tickInfo.SizeTick)
+  const orderBookAddress = lighterConfig.OrderBooks[orderbookname as OrderBookKey] as string
+  const orderBookConfig = await getOrderBookConfigFromAddress(orderBookAddress, hre)
+  const tokenPrecisions = await getTokenPrecisions(orderBookAddress, hre)
+  const amountBase = parseBaseAmount(amount, tokenPrecisions.token0Precision, orderBookConfig.sizeTick)
   if (!amountBase || amountBase.eq(BigNumber.from(0))) {
     throw new Error(`Invalid amountBase ${amountBase}`)
   }
-  const priceBase = parseBasePrice(price, tokenPrecisions.token1Precision, tickInfo.PriceTick)
+  const priceBase = parseBasePrice(price, tokenPrecisions.token1Precision, orderBookConfig.priceTick)
   if (!priceBase || priceBase.eq(BigNumber.from(0))) {
     throw new Error(`Invalid PriceBase ${priceBase}`)
   }
@@ -42,17 +41,17 @@ export const executeOrderCreation = async (
 
   switch (orderType) {
     case OrderType.FoKOrder: {
-      tx = await routerContract.createFoKOrder(orderBookConfig.Id as BigNumber, amountBase, priceBase, isask)
+      tx = await routerContract.createFoKOrder(orderBookConfig.orderBookId, amountBase, priceBase, isask)
       break
     }
 
     case OrderType.IoCOrder: {
-      tx = await routerContract.createIoCOrder(orderBookConfig.Id as BigNumber, amountBase, priceBase, isask)
+      tx = await routerContract.createIoCOrder(orderBookConfig.orderBookId, amountBase, priceBase, isask)
       break
     }
 
     case OrderType.LimitOrder: {
-      tx = await routerContract.createLimitOrder(orderBookConfig.Id as BigNumber, amountBase, priceBase, isask, 0)
+      tx = await routerContract.createLimitOrder(orderBookConfig.orderBookId, amountBase, priceBase, isask, 0)
       break
     }
 
@@ -66,7 +65,7 @@ export const executeOrderCreation = async (
   const successIndicator = await isSuccessful(hre.ethers.provider, tx.hash)
 
   if (successIndicator) {
-    const createOrderEvents: CreateOrderEvent[] = await getCreateOrderEvent(orderBookConfig.Address, tx.hash, hre)
+    const createOrderEvents: CreateOrderEvent[] = await getCreateOrderEvent(orderBookAddress, tx.hash, hre)
     console.log(
       `Create-${orderTypeDescription} Transaction: ${tx.hash} is successful and OrderEvent: ${JSON.stringify(
         createOrderEvents[0],

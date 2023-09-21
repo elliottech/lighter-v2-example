@@ -4,7 +4,8 @@ import * as IERC20MetadataABI from '../artifacts/@openzeppelin/contracts/token/E
 import {HardhatRuntimeEnvironment} from 'hardhat/types'
 import {IOrderBook, IRouter} from '../typechain-types'
 import {IERC20Metadata} from '../typechain-types/extensions/IERC20Metadata'
-import {OrderBookTick} from '../config'
+import {OrderBookConfig, OrderBookTick} from '../config'
+import {BigNumber} from 'ethers'
 
 export enum OrderType {
   LimitOrder,
@@ -54,18 +55,24 @@ export const getTokenContractAt = async (
   return (await hre.ethers.getContractAt(IERC20MetadataABI.abi, tokenAddress, signer)) as any as IERC20Metadata
 }
 
-export const getOrderBookTicksFromAddress = async (
+export const getOrderBookConfigFromAddress = async (
   orderBookAddress: string,
   hre: HardhatRuntimeEnvironment
-): Promise<OrderBookTick> => {
+): Promise<OrderBookConfig> => {
   const orderBookContract = await getOrderBookAt(orderBookAddress, hre)
-  return await getOrderBookTicks(orderBookContract)
+  return await getOrderBookConfig(orderBookContract)
 }
 
-export const getOrderBookTicks = async (orderBookContract: IOrderBook): Promise<OrderBookTick> => {
-  const SizeTick = await orderBookContract.sizeTick()
-  const PriceTick = await orderBookContract.priceTick()
-  return {SizeTick, PriceTick}
+export const getOrderBookConfig = async (orderBookContract: IOrderBook): Promise<OrderBookConfig> => {
+  const orderBookId = await orderBookContract.orderBookId()
+  const sizeTick = await orderBookContract.sizeTick()
+  const priceTick = await orderBookContract.priceTick()
+
+  return {
+    orderBookId: BigNumber.from(orderBookId),
+    sizeTick,
+    priceTick,
+  }
 }
 
 export const getTokenPrecisions = async (

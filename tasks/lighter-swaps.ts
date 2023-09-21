@@ -1,9 +1,14 @@
 import {task} from 'hardhat/config'
 import {boolean} from 'hardhat/internal/core/params/argumentTypes'
-import {BigNumber} from 'ethers'
-import {OrderBookConfig, OrderBookKey, getLighterConfig} from '../config'
-import {isSuccessful, getRouterAt, getSwapExactAmountEvent, getTokenPrecisions, parseAmount} from '../shared'
-import {SwapExactAmountEvent} from 'typechain-types/@elliottech/lighter-v2-core/contracts/interfaces/IOrderBook'
+import {OrderBookKey, getLighterConfig} from '../config'
+import {
+  isSuccessful,
+  getRouterAt,
+  getSwapExactAmountEvent,
+  getTokenPrecisions,
+  parseAmount,
+  getOrderBookConfigFromAddress,
+} from '../shared'
 
 // WETH-USDC
 //exact-input-amount of WETH = 1
@@ -21,8 +26,9 @@ task('swapExactInputSingle')
   .setAction(async ({orderbookname, isask, exactinput, minoutput, recipient, unwrap}, hre) => {
     const lighterConfig = await getLighterConfig()
     const routerContract = getRouterAt(lighterConfig.Router, hre)
-    const orderBookConfig = lighterConfig.OrderBooks[orderbookname as OrderBookKey] as OrderBookConfig
-    const tokenPrecisions = await getTokenPrecisions(orderBookConfig.Address, hre)
+    const orderBookAddress = lighterConfig.OrderBooks[orderbookname as OrderBookKey] as string
+    const orderBookConfig = await getOrderBookConfigFromAddress(orderBookAddress, hre)
+    const tokenPrecisions = await getTokenPrecisions(orderBookAddress, hre)
     const exactInputAmount = parseAmount(
       exactinput,
       isask ? tokenPrecisions.token0Precision : tokenPrecisions.token1Precision
@@ -33,12 +39,12 @@ task('swapExactInputSingle')
     )
     const tx = await (
       await routerContract
-    ).swapExactInputSingle(orderBookConfig.Id as BigNumber, isask, exactInputAmount, minOutputAmount, recipient, unwrap)
+    ).swapExactInputSingle(orderBookConfig.orderBookId, isask, exactInputAmount, minOutputAmount, recipient, unwrap)
     await tx.wait()
     const successIndicator = await isSuccessful(hre.ethers.provider, tx.hash)
 
     if (successIndicator) {
-      const swapExactAmountEvents = await getSwapExactAmountEvent(orderBookConfig.Address, tx.hash, hre)
+      const swapExactAmountEvents = await getSwapExactAmountEvent(orderBookAddress, tx.hash, hre)
 
       console.log(
         `swapExactInputSingle Transaction: ${
@@ -70,8 +76,9 @@ task('swapExactOutputSingle')
   .setAction(async ({orderbookname, isask, exactoutput, maxinput, recipient, unwrap}, hre) => {
     const lighterConfig = await getLighterConfig()
     const routerContract = getRouterAt(lighterConfig.Router, hre)
-    const orderBookConfig = lighterConfig.OrderBooks[orderbookname as OrderBookKey] as OrderBookConfig
-    const tokenPrecisions = await getTokenPrecisions(orderBookConfig.Address, hre)
+    const orderBookAddress = lighterConfig.OrderBooks[orderbookname as OrderBookKey] as string
+    const orderBookConfig = await getOrderBookConfigFromAddress(orderBookAddress, hre)
+    const tokenPrecisions = await getTokenPrecisions(orderBookAddress, hre)
     const exactOutputAmount = parseAmount(
       exactoutput,
       isask ? tokenPrecisions.token1Precision : tokenPrecisions.token0Precision
@@ -82,19 +89,12 @@ task('swapExactOutputSingle')
     )
     const tx = await (
       await routerContract
-    ).swapExactOutputSingle(
-      orderBookConfig.Id as BigNumber,
-      isask,
-      exactOutputAmount,
-      maxInputAmount,
-      recipient,
-      unwrap
-    )
+    ).swapExactOutputSingle(orderBookConfig.orderBookId, isask, exactOutputAmount, maxInputAmount, recipient, unwrap)
     await tx.wait()
     const successIndicator = await isSuccessful(hre.ethers.provider, tx.hash)
 
     if (successIndicator) {
-      const swapExactAmountEvents = await getSwapExactAmountEvent(orderBookConfig.Address, tx.hash, hre)
+      const swapExactAmountEvents = await getSwapExactAmountEvent(orderBookAddress, tx.hash, hre)
 
       console.log(
         `swapExactOutputSingle Transaction: ${
