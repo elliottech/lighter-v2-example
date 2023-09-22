@@ -1,5 +1,5 @@
 import {task} from 'hardhat/config'
-import {OrderBookConfig, OrderBookKey, getLighterConfig} from '../config'
+import {OrderBookKey, getLighterConfig} from '../config'
 import {CreateOrderEvent, getCreateOrderEvent} from '../shared/event-util'
 
 // npx hardhat getCreateOrderEvent --orderbookname WETH-USDC --transactionhash '0x72568e681288efbb79189945ce35c22676133e92c6e83e59737fdc5d2c00011f'  --network arbgoerli
