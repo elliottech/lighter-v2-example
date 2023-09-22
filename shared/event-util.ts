@@ -3,6 +3,32 @@ import {Provider} from '@ethersproject/providers'
 import {OrderType, getOrderBookAt, getOrderTypeFromValue, getTransactionReceipt} from '../shared'
 import {BigNumber, ethers} from 'ethers'
 
+// UpdateLimitOrder action emits CancelLimitOrderEvent & CreateOrderEvent, SwapEvents
+// all createOrder actions emits CreateOrderEvent, SwapEvents
+// all SwapExact actions emits SwapEvents and SwapExactAmountEvent
+// FlashLoan action emits FlashLoanEvent
+export enum LighterAction {
+  CREATER_LIMIT_ORDER,
+  CREATE_IOC_ORDER,
+  CREATE_FOK_ORDER,
+  CANCEL_LIMIT_ORDER,
+  UPDATE_LIMIT_ORDER,
+  SWAP_EXACT_INPUT_SINGLE,
+  SWAP_EXACT_OUTPUT_SINGLE,
+  FLASH_LOAN,
+}
+
+export interface LighterEventWrapper {
+  lighterAction: LighterAction
+  createOrderEvents: CreateOrderEvent[]
+  swapEvents: SwapEvent[]
+  cancelLimitOrderEvents: CancelLimitOrderEvent[]
+  swapExactAmountEvents: SwapExactAmountEvent[]
+  flashLoanEvent: FlashLoanEvent
+  claimableBalanceIncreaseEvents: ClaimableBalanceIncreaseEvent[]
+  claimableBalanceDecreaseEvents: ClaimableBalanceDecreaseEvent[]
+}
+
 export interface CreateOrderEvent {
   owner: string
   id: BigNumber
@@ -10,6 +36,47 @@ export interface CreateOrderEvent {
   priceBase: BigNumber
   isAsk: boolean
   orderType: OrderType
+}
+
+export interface SwapEvent {
+  askId: BigNumber
+  bidId: BigNumber
+  askOwner: string
+  bidOwner: string
+  amount0: BigNumber
+  amount1: BigNumber
+}
+
+export interface CancelLimitOrderEvent {
+  id: BigNumber
+}
+
+export interface SwapExactAmountEvent {
+  sender: string
+  recipient: string
+  isExactInput: boolean
+  isAsk: boolean
+  swapAmount0: BigNumber
+  swapAmount1: BigNumber
+}
+
+export interface FlashLoanEvent {
+  sender: string
+  recipient: string
+  amount0: BigNumber
+  amount1: BigNumber
+}
+
+export interface ClaimableBalanceIncreaseEvent {
+  owner: string
+  amountDelta: BigNumber
+  isToken0: boolean
+}
+
+export interface ClaimableBalanceDecreaseEvent {
+  owner: string
+  amountDelta: BigNumber
+  isToken0: boolean
 }
 
 export const getCreateOrderEvent = async (
@@ -83,15 +150,6 @@ export const parseCreateOrderEventData = (eventData: ethers.utils.LogDescription
     isAsk: eventData.args[4],
     orderType: getOrderTypeFromValue(parseInt(eventData.args[5])),
   }
-}
-
-interface SwapExactAmountEvent {
-  sender: string
-  recipient: string
-  isExactInput: boolean
-  isAsk: boolean
-  swapAmount0: BigNumber
-  swapAmount1: BigNumber
 }
 
 export const getSwapExactAmountEvent = async (
