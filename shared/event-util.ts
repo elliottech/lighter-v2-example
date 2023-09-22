@@ -1,93 +1,33 @@
 import '@nomiclabs/hardhat-ethers'
 import {Provider} from '@ethersproject/providers'
-import {OrderType, getOrderBookAt, getOrderTypeFromValue, getTransactionReceipt} from '../shared'
+import {getOrderBookAt, getOrderTypeFromValue, getTransactionReceipt} from '../shared'
 import {BigNumber, ethers} from 'ethers'
+import {
+  LighterEventType,
+  CreateOrderEvent,
+  CancelLimitOrderEvent,
+  SwapEvent,
+  FlashLoanEvent,
+  SwapExactAmountEvent,
+  ClaimableBalanceIncreaseEvent,
+  ClaimableBalanceDecreaseEvent,
+  getLighterEventSignature,
+} from '../config'
 
-// UpdateLimitOrder action emits CancelLimitOrderEvent & CreateOrderEvent, SwapEvents
-// all createOrder actions emits CreateOrderEvent, SwapEvents
-// all SwapExact actions emits SwapEvents and SwapExactAmountEvent
-// FlashLoan action emits FlashLoanEvent
-export enum LighterAction {
-  CREATE_LIMIT_ORDER,
-  CREATE_BATCH_LIMIT_ORDER,
-  CREATE_IOC_ORDER,
-  CREATE_BATCH_IOC_ORDER,
-  CREATE_FOK_ORDER,
-  CREATE_BATCH_FOK_ORDER,
-  CANCEL_LIMIT_ORDER,
-  CANCEL_BATCH_LIMIT_ORDER,
-  UPDATE_LIMIT_ORDER,
-  SWAP_EXACT_INPUT_SINGLE,
-  SWAP_EXACT_OUTPUT_SINGLE,
-  FLASH_LOAN,
-}
-
-export interface LighterEventWrapper {
-  lighterAction: LighterAction
-  createOrderEvents: CreateOrderEvent[]
-  swapEvents: SwapEvent[]
-  cancelLimitOrderEvents: CancelLimitOrderEvent[]
-  swapExactAmountEvents: SwapExactAmountEvent[]
-  flashLoanEvent: FlashLoanEvent
-  claimableBalanceIncreaseEvents: ClaimableBalanceIncreaseEvent[]
-  claimableBalanceDecreaseEvents: ClaimableBalanceDecreaseEvent[]
-}
-
-export interface CreateOrderEvent {
-  owner: string
-  id: BigNumber
-  amount0Base: BigNumber
-  priceBase: BigNumber
-  isAsk: boolean
-  orderType: OrderType
-}
-
-export interface SwapEvent {
-  askId: BigNumber
-  bidId: BigNumber
-  askOwner: string
-  bidOwner: string
-  amount0: BigNumber
-  amount1: BigNumber
-}
-
-export interface CancelLimitOrderEvent {
-  id: BigNumber
-}
-
-export interface SwapExactAmountEvent {
-  sender: string
-  recipient: string
-  isExactInput: boolean
-  isAsk: boolean
-  swapAmount0: BigNumber
-  swapAmount1: BigNumber
-}
-
-export interface FlashLoanEvent {
-  sender: string
-  recipient: string
-  amount0: BigNumber
-  amount1: BigNumber
-}
-
-export interface ClaimableBalanceIncreaseEvent {
-  owner: string
-  amountDelta: BigNumber
-  isToken0: boolean
-}
-
-export interface ClaimableBalanceDecreaseEvent {
-  owner: string
-  amountDelta: BigNumber
-  isToken0: boolean
-}
-
-export const getCreateOrderEvent = async (
+export const getLighterEventsByEventType = async (
   orderBookAddress: string,
   transactionHash: string,
+  lighterEventType: LighterEventType,
   hre: any
-): Promise<CreateOrderEvent[]> => {
+): Promise<
+  | CreateOrderEvent[]
+  | CancelLimitOrderEvent[]
+  | SwapEvent[]
+  | SwapExactAmountEvent[]
+  | FlashLoanEvent[]
+  | ClaimableBalanceIncreaseEvent[]
+  | ClaimableBalanceDecreaseEvent[]
+> => {
   if (!orderBookAddress) {
     throw new Error(`Invalid orderBookAddress`)
   }
@@ -108,12 +48,16 @@ export const getCreateOrderEvent = async (
     throw new Error(`Failed to load orderBookContract Instance for: ${orderBookAddress}`)
   }
 
-  const eventSignature = 'CreateOrder(address,uint32,uint64,uint64,bool,uint8)'
-  let eventInterfaceBlock = orderbookContract.interface.events[eventSignature]
+  let eventSignatureData = getLighterEventSignature(lighterEventType)
+
+  let eventInterfaceBlock =
+    orderbookContract.interface.events[
+      eventSignatureData.eventSignature as keyof typeof orderbookContract.interface.events
+    ]
 
   // Check if the contract ABI includes the event interface
   if (!eventInterfaceBlock) {
-    throw new Error(`Event ${eventSignature} not found in Orderbook-contract ABI.`)
+    throw new Error(`Event ${eventSignatureData.eventSignature} not found in Orderbook-contract ABI.`)
   }
 
   const txReceipt = await getTransactionReceipt(provider, transactionHash)
@@ -129,16 +73,16 @@ export const getCreateOrderEvent = async (
   // Define the event interface with the full event structure
   let eventInterface = new ethers.utils.Interface([eventInterfaceBlock])
 
-  // Filter the logs for the 'CreateOrder' event
+  // Filter the logs for the event
   const decodedEventLogs = txReceipt.logs
-    .filter((log) => log.topics[0] === eventInterface.getEventTopic('CreateOrder'))
+    .filter((log) => log.topics[0] === eventInterface.getEventTopic(eventSignatureData.eventName))
     .map((log) => eventInterface.parseLog(log))
 
   if (!decodedEventLogs || decodedEventLogs.length == 0 || !decodedEventLogs[0]) {
-    throw new Error(`Failed to lookup for CreateOrder Event`)
+    throw new Error(`Failed to lookup for ${eventSignatureData.eventName}`)
   }
 
-  return decodedEventLogs.map((eventData) => parseCreateOrderEventData(eventData))
+  return decodedEventLogs.map((eventData) => eventSignatureData.parseEventFunction(eventData))
 }
 
 export const parseCreateOrderEventData = (eventData: ethers.utils.LogDescription): CreateOrderEvent => {
@@ -156,62 +100,29 @@ export const parseCreateOrderEventData = (eventData: ethers.utils.LogDescription
   }
 }
 
-export const getSwapExactAmountEvent = async (
-  orderBookAddress: string,
-  transactionHash: string,
-  hre: any
-): Promise<SwapExactAmountEvent[]> => {
-  if (!orderBookAddress) {
-    throw new Error(`Invalid orderBookAddress`)
+function parseCancelLimitOrderEventData(eventData: ethers.utils.LogDescription): CancelLimitOrderEvent {
+  if (!eventData || !eventData.args || eventData.args.length != 1) {
+    throw new Error(`Invalid eventData`)
   }
 
-  if (!transactionHash) {
-    throw new Error(`Invalid transactionHash`)
+  return {
+    id: BigNumber.from(eventData.args[0].toString()),
+  }
+}
+
+function parseSwapEventData(eventData: ethers.utils.LogDescription): SwapEvent {
+  if (!eventData || !eventData.args || eventData.args.length != 6) {
+    throw new Error(`Invalid eventData`)
   }
 
-  const provider: Provider = hre.ethers.provider
-
-  if (!provider || !provider._isProvider) {
-    throw new Error(`Invalid provider`)
+  return {
+    askId: BigNumber.from(eventData.args[0].toString()),
+    bidId: BigNumber.from(eventData.args[1].toString()),
+    askOwner: eventData.args[2].toString(),
+    bidOwner: eventData.args[3].toString(),
+    amount0: BigNumber.from(eventData.args[4].toString()),
+    amount1: BigNumber.from(eventData.args[5].toString()),
   }
-
-  const orderbookContract = await getOrderBookAt(orderBookAddress, hre)
-
-  if (!orderbookContract) {
-    throw new Error(`Failed to load orderBookContract Instance for: ${orderBookAddress}`)
-  }
-
-  const eventSignature = 'SwapExactAmount(address,address,bool,bool,uint256,uint256)'
-  let eventInterfaceBlock = orderbookContract.interface.events[eventSignature]
-
-  // Check if the contract ABI includes the event interface
-  if (!eventInterfaceBlock) {
-    throw new Error(`Event ${eventSignature} not found in Orderbook-contract ABI.`)
-  }
-
-  const txReceipt = await getTransactionReceipt(provider, transactionHash)
-
-  if (!txReceipt) {
-    throw new Error(`Invalid transactionReceipt for hash: ${transactionHash}`)
-  }
-
-  if (!txReceipt.logs || txReceipt.logs.length == 0) {
-    console.log(`transactionReceipt has invalid or empty logs`)
-  }
-
-  // Define the event interface with the full event structure
-  let eventInterface = new ethers.utils.Interface([eventInterfaceBlock])
-
-  // Filter the logs for the 'SwapExactAmount' event
-  const decodedEventLogs = txReceipt.logs
-    .filter((log) => log.topics[0] === eventInterface.getEventTopic('SwapExactAmount'))
-    .map((log) => eventInterface.parseLog(log))
-
-  if (!decodedEventLogs || decodedEventLogs.length == 0 || !decodedEventLogs[0]) {
-    throw new Error(`Failed to lookup for SwapExactAmount Event`)
-  }
-
-  return decodedEventLogs.map((eventData) => parseSwapExactAmountEventData(eventData))
 }
 
 export const parseSwapExactAmountEventData = (eventData: ethers.utils.LogDescription): SwapExactAmountEvent => {
@@ -223,4 +134,56 @@ export const parseSwapExactAmountEventData = (eventData: ethers.utils.LogDescrip
     swapAmount0: BigNumber.from(eventData.args[4]),
     swapAmount1: BigNumber.from(eventData.args[5]),
   }
+}
+
+export const parseFlashLoanEventData = (eventData: ethers.utils.LogDescription): FlashLoanEvent => {
+  if (!eventData || !eventData.args || eventData.args.length != 4) {
+    throw new Error(`Invalid eventData`)
+  }
+
+  return {
+    sender: eventData.args[0].toString(),
+    recipient: eventData.args[1].toString(),
+    amount0: BigNumber.from(eventData.args[2]),
+    amount1: BigNumber.from(eventData.args[3]),
+  }
+}
+
+export const parseClaimableBalanceIncreaseEventData = (
+  eventData: ethers.utils.LogDescription
+): ClaimableBalanceIncreaseEvent => {
+  if (!eventData || !eventData.args || eventData.args.length != 3) {
+    throw new Error(`Invalid eventData`)
+  }
+
+  return {
+    owner: eventData.args[0].toString(),
+    amountDelta: BigNumber.from(eventData.args[1].toString()),
+    isToken0: eventData.args[2].toString(),
+  }
+}
+
+export const parseClaimableBalanceDecreaseEventData = (
+  eventData: ethers.utils.LogDescription
+): ClaimableBalanceDecreaseEvent => {
+  if (!eventData || !eventData.args || eventData.args.length != 3) {
+    throw new Error(`Invalid eventData`)
+  }
+
+  return {
+    owner: eventData.args[0].toString(),
+    amountDelta: BigNumber.from(eventData.args[1].toString()),
+    isToken0: eventData.args[2].toString(),
+  }
+}
+
+// Define the parsing functions in the parseFunctions object
+export const ParseEventFunctions = {
+  parseCreateOrderEventData,
+  parseCancelLimitOrderEventData,
+  parseSwapEventData,
+  parseSwapExactAmountEventData,
+  parseFlashLoanEventData,
+  parseClaimableBalanceIncreaseEventData,
+  parseClaimableBalanceDecreaseEventData,
 }

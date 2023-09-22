@@ -1,5 +1,5 @@
-import {BigNumber} from 'ethers'
-import {ChainId, LighterConfig, OrderBookKey, Token} from './types'
+import {ParseEventFunctions} from '../shared'
+import {ChainId, LighterConfig, LighterEventSignature, LighterEventType, OrderBookKey, Token} from './types'
 
 const lighterConfigs: {
   [ChainId: string]: LighterConfig
@@ -62,6 +62,46 @@ const lighterConfigs: {
   },
 }
 
+const lighterEventSignatures: {
+  [LighterEventType: string]: LighterEventSignature
+} = {
+  [LighterEventType.CREATE_ORDER_EVENT]: {
+    eventSignature: 'CreateOrder(address,uint32,uint64,uint64,bool,uint8)',
+    eventName: 'CreateOrder',
+    parseEventFunction: ParseEventFunctions.parseCreateOrderEventData,
+  },
+  [LighterEventType.CANCEL_LIMIT_ORDER_EVENT]: {
+    eventSignature: 'CancelLimitOrder(uint32)',
+    eventName: 'CancelLimitOrder',
+    parseEventFunction: ParseEventFunctions.parseCancelLimitOrderEventData,
+  },
+  [LighterEventType.SWAP_EVENT]: {
+    eventSignature: 'Swap(uint32,uint32,address,address,uint256,uint256)',
+    eventName: 'Swap',
+    parseEventFunction: ParseEventFunctions.parseSwapEventData,
+  },
+  [LighterEventType.SWAP_EXACT_AMOUNT_EVENT]: {
+    eventSignature: 'SwapExactAmount(address,address,bool,bool,uint256,uint256)',
+    eventName: 'SwapExactAmount',
+    parseEventFunction: ParseEventFunctions.parseSwapExactAmountEventData,
+  },
+  [LighterEventType.FLASH_LOAN_EVENT]: {
+    eventSignature: 'FlashLoan(address,address,uint256,uint256)',
+    eventName: 'FlashLoan',
+    parseEventFunction: ParseEventFunctions.parseFlashLoanEventData,
+  },
+  [LighterEventType.CLAIMABLE_BALANCE_INCREASE_EVENT]: {
+    eventSignature: 'ClaimableBalanceIncrease(address,uint256,bool)',
+    eventName: 'ClaimableBalanceIncrease',
+    parseEventFunction: ParseEventFunctions.parseClaimableBalanceIncreaseEventData,
+  },
+  [LighterEventType.CLAIMABLE_BALANCE_DECREASE_EVENT]: {
+    eventSignature: 'ClaimableBalanceDecrease(address,uint256,bool)',
+    eventName: 'ClaimableBalanceDecrease',
+    parseEventFunction: ParseEventFunctions.parseClaimableBalanceDecreaseEventData,
+  },
+}
+
 async function getChainId(): Promise<ChainId> {
   let network = require('hardhat').network
   const chainId = await network.provider.request({method: 'eth_chainId'})
@@ -87,4 +127,8 @@ export async function getLighterConfig(forceTestnet?: boolean) {
     throw new Error(`ChainId ${chainId} is not supported`)
   }
   return lighterConfigs[chainId]
+}
+
+export function getLighterEventSignature(lighterEventType: LighterEventType) {
+  return lighterEventSignatures[lighterEventType]
 }

@@ -1,4 +1,4 @@
-import {BigNumber} from 'ethers'
+import {BigNumber, ethers} from 'ethers'
 import {OrderType} from 'shared'
 
 export enum OrderBookKey {
@@ -99,4 +99,100 @@ export const orderDataToString = (orderData: OrderData): string => {
 
   Bid Orders:\n
   ${bidOrdersString}`
+}
+
+// UpdateLimitOrder action emits CancelLimitOrderEvent & CreateOrderEvent, SwapEvents
+// all createOrder actions emits CreateOrderEvent, SwapEvents
+// all SwapExact actions emits SwapEvents and SwapExactAmountEvent
+// FlashLoan action emits FlashLoanEvent
+export enum LighterAction {
+  CREATE_LIMIT_ORDER,
+  CREATE_BATCH_LIMIT_ORDER,
+  CREATE_IOC_ORDER,
+  CREATE_BATCH_IOC_ORDER,
+  CREATE_FOK_ORDER,
+  CREATE_BATCH_FOK_ORDER,
+  CANCEL_LIMIT_ORDER,
+  CANCEL_BATCH_LIMIT_ORDER,
+  UPDATE_LIMIT_ORDER,
+  SWAP_EXACT_INPUT_SINGLE,
+  SWAP_EXACT_OUTPUT_SINGLE,
+  FLASH_LOAN,
+}
+
+export enum LighterEventType {
+  CREATE_ORDER_EVENT,
+  CANCEL_LIMIT_ORDER_EVENT,
+  SWAP_EVENT,
+  SWAP_EXACT_AMOUNT_EVENT,
+  FLASH_LOAN_EVENT,
+  CLAIMABLE_BALANCE_INCREASE_EVENT,
+  CLAIMABLE_BALANCE_DECREASE_EVENT,
+}
+
+export interface LighterEventSignature {
+  eventSignature: string
+  eventName: string
+  parseEventFunction: any
+}
+
+export interface LighterEventWrapper {
+  lighterAction: LighterAction
+  createOrderEvents: CreateOrderEvent[]
+  swapEvents: SwapEvent[]
+  cancelLimitOrderEvents: CancelLimitOrderEvent[]
+  swapExactAmountEvents: SwapExactAmountEvent[]
+  flashLoanEvents: FlashLoanEvent[]
+  claimableBalanceIncreaseEvents: ClaimableBalanceIncreaseEvent[]
+  claimableBalanceDecreaseEvents: ClaimableBalanceDecreaseEvent[]
+}
+
+export interface CreateOrderEvent {
+  owner: string
+  id: BigNumber
+  amount0Base: BigNumber
+  priceBase: BigNumber
+  isAsk: boolean
+  orderType: OrderType
+}
+
+export interface SwapEvent {
+  askId: BigNumber
+  bidId: BigNumber
+  askOwner: string
+  bidOwner: string
+  amount0: BigNumber
+  amount1: BigNumber
+}
+
+export interface CancelLimitOrderEvent {
+  id: BigNumber
+}
+
+export interface SwapExactAmountEvent {
+  sender: string
+  recipient: string
+  isExactInput: boolean
+  isAsk: boolean
+  swapAmount0: BigNumber
+  swapAmount1: BigNumber
+}
+
+export interface FlashLoanEvent {
+  sender: string
+  recipient: string
+  amount0: BigNumber
+  amount1: BigNumber
+}
+
+export interface ClaimableBalanceIncreaseEvent {
+  owner: string
+  amountDelta: BigNumber
+  isToken0: boolean
+}
+
+export interface ClaimableBalanceDecreaseEvent {
+  owner: string
+  amountDelta: BigNumber
+  isToken0: boolean
 }
