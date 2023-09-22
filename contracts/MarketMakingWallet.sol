@@ -1,4 +1,4 @@
-// SPDX-License-Identifier: BUSL-1.1
+// SPDX-License-Identifier: MIT
 pragma solidity ^0.8.0;
 
 import {IERC20} from "@openzeppelin/contracts/token/ERC20/IERC20.sol";
@@ -7,12 +7,12 @@ import {IFactory} from "@elliottech/lighter-v2-core/contracts/interfaces/IFactor
 import {ILighterV2TransferCallback, IERC20Minimal} from "@elliottech/lighter-v2-core/contracts/interfaces/ILighterV2TransferCallback.sol";
 
 /// @title MarketMakingWallet
-/// @notice A wallet which interacts with the Lighter protocol by placing optimizer limit orders.
-/// An optimized limit order, called PerformanceLimitOrder, differs from normal a LimitOrder because it first deposits
-/// the tokens into the order book. This allows the order book to not make transfers each time an order is created
-/// or canceled, thus reducing the gas cost.
+/// @notice A wallet that interacts with the Lighter protocol by placing optimized limit orders.
+/// An optimized limit order, known as a PerformanceLimitOrder, differs from a standard LimitOrder in that it first
+/// deposits the tokens into the order book. This eliminates the need for the order book to execute transfers each time
+/// an order is created or canceled, thereby reducing gas costs.
 ///
-/// The MarketMakingWallet is a starting point for users which want to place resting orders on Lighter (to market make)
+/// The MarketMakingWallet serves as a starting point for users who wish to place resting orders on Lighter (i.e., to market make).
 contract MarketMakingWallet is ILighterV2TransferCallback {
     /// @notice address of the owner of wallet
     address public immutable owner;
@@ -35,10 +35,10 @@ contract MarketMakingWallet is ILighterV2TransferCallback {
         factory = _factory;
     }
 
-    ///  @dev Callback function called by the `orderBook` contract after a successful transfer.
-    ///  This function is used to handle the transfer of `debitTokenAmount` of the `debitToken`.
-    ///  It ensures that only the `orderBook` contract can call this function.
-    /// The transferred tokens are then sent back to the sender.
+    /// @dev Callback function called by the `orderBook` contract after a successful transfer.
+    /// This function handles the transfer of `debitTokenAmount` of the `debitToken`.
+    /// It ensures that only the `orderBook` contract can call this function.
+    /// The tokens are transferred to the sender.
     /// @param debitTokenAmount The amount of debit tokens to be transferred.
     /// @param debitToken The ERC20 token used for the transfer.
     /// @param data Additional data that can be provided to the function.
@@ -62,76 +62,58 @@ contract MarketMakingWallet is ILighterV2TransferCallback {
         }
     }
 
-    /// @dev Creates multiple performance limit orders in the order book. Only the contract owner can call this function.
-    ///  The function processes each order provided in the arrays and creates corresponding performance limit orders in the order book.
-    ///
-    ///  @param orderBookId The id of the order book which will be used.
-    ///  @param size The number of orders to create.
-    ///  @param amount0 An array of amounts denominated in token0 to be used for each order.
-    ///  @param price An array of prices denominated in token1 for each order.
-    ///  @param isAsk An array indicating whether each order is an "ask" order (true) or a "bid" order (false).
-    ///  @param hintId An array of hint IDs to guide order placement in the order book.
-    ///  @return orderId An array containing the order IDs of the created orders.
+    /// @dev Creates performance limit orders in the order book.
+    /// @notice Can only be called by owner.
+    /// @param orderBook The address of the order book
+    /// @param amount0 The amount of token0 for the order
+    /// @param price The prices denominated in token1
+    /// @param isAsk Whether order is an ask order
+    /// @param hintId Where to insert each order in the given order book.
+    /// Should to be calculated off-chain using the suggestHintId function from the IOrderBook.
+    /// Providing a good hintId will reduce gas cost.
+    /// Passing 0 will always work, but might result in a higher gas cost.
+    /// @return orderId The id of the created order
     function createLimitOrder(
-        uint8 orderBookId,
-        uint8 size,
-        uint256[] memory amount0,
-        uint256[] memory price,
-        bool[] memory isAsk,
-        uint32[] memory hintId
-    ) public onlyOwner returns (uint32[] memory orderId) {
-        IOrderBook orderBook = IOrderBook(factory.getOrderBookFromId(orderBookId));
+        IOrderBook orderBook,
+        uint256 amount0,
+        uint256 price,
+        bool isAsk,
+        uint32 hintId
+    ) public onlyOwner returns (uint32 orderId) {
         uint256 sizeTick = orderBook.sizeTick();
         uint256 priceTick = orderBook.priceTick();
-        orderId = new uint32[](size);
-        bytes memory callbackData = abi.encodePacked(orderBookId);
-        for (uint8 i; i < size; ) {
-            orderId[i] = orderBook.createOrder(
-                uint64(amount0[i] / sizeTick),
-                uint64(price[i] / priceTick),
-                isAsk[i],
+        bytes memory callbackData = abi.encodePacked(orderBook.orderBookId());
+
+        return
+            orderBook.createOrder(
+                uint64(amount0 / sizeTick),
+                uint64(price / priceTick),
+                isAsk,
                 address(this),
-                hintId[i],
+                hintId,
                 IOrderBook.OrderType.PerformanceLimitOrder,
                 callbackData
             );
-            unchecked {
-                ++i;
-            }
-        }
     }
 
-    /// @dev Cancels multiple limit orders in the order book. Only the contract owner can call this function.
-    /// The function processes each order ID provided in the array and attempts to cancel the corresponding limit orders.
-    ///
-    /// @param orderBookId The id of the order book which will be used.
-    /// @param size The number of orders to cancel.
-    /// @param orderId An array containing the order IDs to be canceled.
-    /// @return isCanceled An array indicating whether each order was successfully canceled.
-    function cancelLimitOrder(
-        uint8 orderBookId,
-        uint8 size,
-        uint32[] memory orderId
-    ) external onlyOwner returns (bool[] memory isCanceled) {
-        IOrderBook orderBook = IOrderBook(factory.getOrderBookFromId(orderBookId));
-        isCanceled = new bool[](size);
-        for (uint256 i; i < size; ) {
-            isCanceled[i] = orderBook.cancelLimitOrder(orderId[i], address(this));
-            unchecked {
-                ++i;
-            }
-        }
+    /// @dev Cancels performance limit orders in the order book.
+    /// @notice Can only be called by owner.
+    /// @param orderBook The address of the order book
+    /// @param orderId The id of the order
+    /// @return isCanceled Whether the order was canceled.
+    function cancelLimitOrder(IOrderBook orderBook, uint32 orderId) external onlyOwner returns (bool isCanceled) {
+        return orderBook.cancelLimitOrder(orderId, address(this));
     }
 
-    /// @notice deposit token amount to the orderBook
-    /// The tokens need to be send in advance to the wallet, in order for the deposit to work
-    /// Another withdraw will be needed to retrieve the tokens back to the owner
-    /// @param orderBookId The orderBookId where the funds will be deposited into
+    /// @notice Deposits token amount into the orderBook.
+    /// Tokens must be sent to the wallet in advance for the deposit to work.
+    /// Another withdrawal will be needed to return the tokens to the owner.
+    /// Can only be called by the owner.
+    /// @param orderBook The address of the order book
     /// @param tokenAddress The address of the token which is being deposited
     /// @param amount The amount of token that will be deposited
-    function depositInOrderBook(uint8 orderBookId, address tokenAddress, uint256 amount) external onlyOwner {
-        IOrderBook orderBook = IOrderBook(factory.getOrderBookFromId(orderBookId));
-        bytes memory callbackData = abi.encodePacked(orderBookId);
+    function depositInOrderBook(IOrderBook orderBook, address tokenAddress, uint256 amount) external onlyOwner {
+        bytes memory callbackData = abi.encodePacked(orderBook.orderBookId());
 
         if (address(orderBook.token0()) == tokenAddress) {
             return orderBook.depositToken(amount, true, callbackData);
@@ -142,14 +124,13 @@ contract MarketMakingWallet is ILighterV2TransferCallback {
         }
     }
 
-    /// @notice claim token amount from the orderBook and deposits it back into the wallet
-    /// Another withdraw will be needed to retrieve the tokens back to the owner
-    /// @param orderBookId The orderBookId where the funds will be claimed to
+    /// @notice Claims token amount from the orderBook and deposits it back into the wallet.
+    /// Another withdrawal will be needed to retrieve the tokens back to the owner.
+    /// Can only be called by the owner.
+    /// @param orderBook The address of the order book
     /// @param tokenAddress The address of the token which is being claimed
     /// @param amount The amount of token that will be claimed back into the wallet
-    function claimFromOrderBook(uint8 orderBookId, address tokenAddress, uint256 amount) external onlyOwner {
-        IOrderBook orderBook = IOrderBook(factory.getOrderBookFromId(orderBookId));
-
+    function claimFromOrderBook(IOrderBook orderBook, address tokenAddress, uint256 amount) external onlyOwner {
         if (address(orderBook.token0()) == tokenAddress) {
             return orderBook.claimToken(amount, true);
         } else if (address(orderBook.token1()) == tokenAddress) {
@@ -159,6 +140,14 @@ contract MarketMakingWallet is ILighterV2TransferCallback {
         }
     }
 
+    /// @dev Send tokens from the wallet back to the owner.
+    /// Tokens need to be sent to the wallet beforehand because the lighterV2TransferCallback
+    /// pays the tokens by sending them from this wallet.
+    /// Alternatively, it's possible to use transferFrom instead, from an address that has approved this wallet.
+    /// In that case, this function becomes obsolete, but deprecating it might lead to a loss of funds.
+    /// @notice can only be called by owner
+    /// @param tokenAddress Address of the token which is being withdrawn
+    /// @param amount The amount of tokens which are being withdrawn
     function withdraw(address tokenAddress, uint256 amount) external onlyOwner {
         IERC20 token = IERC20(tokenAddress);
         require(token.transfer(owner, amount), "Token transfer failed");
