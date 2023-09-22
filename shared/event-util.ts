@@ -8,10 +8,14 @@ import {BigNumber, ethers} from 'ethers'
 // all SwapExact actions emits SwapEvents and SwapExactAmountEvent
 // FlashLoan action emits FlashLoanEvent
 export enum LighterAction {
-  CREATER_LIMIT_ORDER,
+  CREATE_LIMIT_ORDER,
+  CREATE_BATCH_LIMIT_ORDER,
   CREATE_IOC_ORDER,
+  CREATE_BATCH_IOC_ORDER,
   CREATE_FOK_ORDER,
+  CREATE_BATCH_FOK_ORDER,
   CANCEL_LIMIT_ORDER,
+  CANCEL_BATCH_LIMIT_ORDER,
   UPDATE_LIMIT_ORDER,
   SWAP_EXACT_INPUT_SINGLE,
   SWAP_EXACT_OUTPUT_SINGLE,
