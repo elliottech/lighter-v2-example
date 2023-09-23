@@ -1,5 +1,11 @@
 import {BigNumber, ethers} from 'ethers'
-import {OrderType} from 'shared'
+
+export enum OrderType {
+  LimitOrder,
+  PerformaceLimitOrder,
+  FoKOrder,
+  IoCOrder,
+}
 
 export enum OrderBookKey {
   WETH_USDC = 'WETH-USDC',
@@ -130,10 +136,23 @@ export enum LighterEventType {
   CLAIMABLE_BALANCE_DECREASE_EVENT,
 }
 
+export enum LighterContracts {
+  ROUTER,
+  ORDERBOOK,
+}
+
 export interface LighterEventSignature {
+  contractName: LighterContracts
   eventSignature: string
   eventName: string
   parseEventFunction: any
+}
+
+export interface LighterFunctionSignature {
+  contractName: LighterContracts
+  functionSignature: string
+  functionName: string
+  functionSelector: string
 }
 
 export interface LighterEventWrapper {

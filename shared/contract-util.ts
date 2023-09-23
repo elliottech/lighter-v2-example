@@ -5,31 +5,8 @@ import * as FactoryABI from '@elliottech/lighter-v2-core/artifacts/contracts/Fac
 import {HardhatRuntimeEnvironment} from 'hardhat/types'
 import {IOrderBook, IRouter, IFactory} from '../typechain-types'
 import {IERC20Metadata} from '../typechain-types/@openzeppelin/contracts/token/ERC20/extensions/IERC20Metadata'
-import {OrderBookConfig} from '../config'
+import {OrderBookConfig, OrderType} from '../config'
 import {BigNumber} from 'ethers'
-
-export enum OrderType {
-  LimitOrder,
-  PerformaceLimitOrder,
-  FoKOrder,
-  IoCOrder,
-}
-
-// Function to get the string representation of an enum value
-export const getOrderTypeString = (value: OrderType): string => {
-  switch (value) {
-    case OrderType.LimitOrder:
-      return 'LimitOrder'
-    case OrderType.FoKOrder:
-      return 'FoKOrder'
-    case OrderType.IoCOrder:
-      return 'IoCOrder'
-    case OrderType.PerformaceLimitOrder:
-      return 'PerformaceLimitOrder'
-    default:
-      throw new Error('Invalid enum value')
-  }
-}
 
 // Function to get enum value from a number
 export const getOrderTypeFromValue = (value: number): OrderType => {

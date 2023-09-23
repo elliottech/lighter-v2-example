@@ -1,5 +1,6 @@
 import {Provider} from '@ethersproject/providers'
 import {ethers} from 'ethers'
+import {HardhatRuntimeEnvironment} from 'hardhat/types'
 
 export const isSuccessful = async (provider: Provider, transactionHash: string): Promise<boolean> => {
   const txReceipt = await getTransactionReceipt(provider, transactionHash)
@@ -39,4 +40,19 @@ export const getRevertReason = async (
   console.error('Transaction reverted with reason:', revertReason)
 
   return revertReason
+}
+
+async function getFunctionSelector(transactionHash: string, hre: HardhatRuntimeEnvironment) {
+  // Get transaction details
+  const tx = await hre.ethers.provider.getTransaction(transactionHash)
+
+  if (!tx) {
+    return 'Transaction not found'
+  }
+
+  // Extract input data from the transaction
+  const inputData = tx.data
+
+  // Take the first 4 bytes (8 characters) as the function selector
+  return inputData.slice(0, 10)
 }

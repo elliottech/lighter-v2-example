@@ -1,5 +1,33 @@
+import {ethers} from 'ethers'
 import {ParseEventFunctions} from '../shared'
-import {ChainId, LighterConfig, LighterEventSignature, LighterEventType, OrderBookKey, Token} from './types'
+import {
+  ChainId,
+  LighterAction,
+  LighterConfig,
+  LighterContracts,
+  LighterEventSignature,
+  LighterEventType,
+  LighterFunctionSignature,
+  OrderBookKey,
+  OrderType,
+  Token,
+} from './types'
+
+// Function to get the string representation of an enum value
+export const getOrderTypeString = (value: OrderType): string => {
+  switch (value) {
+    case OrderType.LimitOrder:
+      return 'LimitOrder'
+    case OrderType.FoKOrder:
+      return 'FoKOrder'
+    case OrderType.IoCOrder:
+      return 'IoCOrder'
+    case OrderType.PerformaceLimitOrder:
+      return 'PerformaceLimitOrder'
+    default:
+      throw new Error('Invalid enum value')
+  }
+}
 
 const lighterConfigs: {
   [ChainId: string]: LighterConfig
@@ -62,40 +90,100 @@ const lighterConfigs: {
   },
 }
 
+const lighterFunctionSignatures: {
+  [LighterAction: string]: LighterFunctionSignature
+} = {
+  [LighterAction.CREATE_LIMIT_ORDER]: {
+    contractName: LighterContracts.ROUTER,
+    functionSignature: 'createLimitOrder(uint8,uint64,uint64,bool,uint32)',
+    functionName: 'createLimitOrder',
+    functionSelector: ethers.utils.id('createLimitOrder(uint8,uint64,uint64,bool,uint32)').substring(0, 8),
+  },
+  [LighterAction.CANCEL_LIMIT_ORDER]: {
+    contractName: LighterContracts.ROUTER,
+    functionSignature: 'cancelLimitOrder(uint8,uint32)',
+    functionName: 'cancelLimitOrder',
+    functionSelector: ethers.utils.id('cancelLimitOrder(uint8,uint32)').substring(0, 8),
+  },
+  [LighterAction.UPDATE_LIMIT_ORDER]: {
+    contractName: LighterContracts.ROUTER,
+    functionSignature: 'updateLimitOrder(uint8,uint32,uint64,uint64,uint32)',
+    functionName: 'updateLimitOrder',
+    functionSelector: ethers.utils.id('updateLimitOrder(uint8,uint32,uint64,uint64,uint32)').substring(0, 8),
+  },
+  [LighterAction.FLASH_LOAN]: {
+    contractName: LighterContracts.ORDERBOOK,
+    functionSignature: 'flashLoan(address,uint256,uint256,bytes)',
+    functionName: 'flashLoan',
+    functionSelector: ethers.utils.id('flashLoan(address,uint256,uint256,bytes)').substring(0, 8),
+  },
+  [LighterAction.CREATE_FOK_ORDER]: {
+    contractName: LighterContracts.ROUTER,
+    functionSignature: 'createFoKOrder(uint8,uint64,uint64,bool)',
+    functionName: 'createFoKOrder',
+    functionSelector: ethers.utils.id('createFoKOrder(uint8,uint64,uint64,bool)').substring(0, 8),
+  },
+  [LighterAction.CREATE_IOC_ORDER]: {
+    contractName: LighterContracts.ROUTER,
+    functionSignature: 'createIoCOrder(uint8,uint64,uint64,bool)',
+    functionName: 'createIoCOrder',
+    functionSelector: ethers.utils.id('createIoCOrder(uint8,uint64,uint64,bool)').substring(0, 8),
+  },
+  [LighterAction.SWAP_EXACT_INPUT_SINGLE]: {
+    contractName: LighterContracts.ROUTER,
+    functionSignature: 'swapExactInputSingle(uint8,bool,uint256,uint256,address,bool)',
+    functionName: 'swapExactInputSingle',
+    functionSelector: ethers.utils.id('swapExactInputSingle(uint8,bool,uint256,uint256,address,bool)').substring(0, 8),
+  },
+  [LighterAction.SWAP_EXACT_OUTPUT_SINGLE]: {
+    contractName: LighterContracts.ROUTER,
+    functionSignature: 'swapExactOutputSingle(uint8,bool,uint256,uint256,address,bool)',
+    functionName: 'swapExactOutputSingle',
+    functionSelector: ethers.utils.id('swapExactOutputSingle(uint8,bool,uint256,uint256,address,bool)').substring(0, 8),
+  },
+}
+
 const lighterEventSignatures: {
   [LighterEventType: string]: LighterEventSignature
 } = {
   [LighterEventType.CREATE_ORDER_EVENT]: {
+    contractName: LighterContracts.ORDERBOOK,
     eventSignature: 'CreateOrder(address,uint32,uint64,uint64,bool,uint8)',
     eventName: 'CreateOrder',
     parseEventFunction: ParseEventFunctions.parseCreateOrderEventData,
   },
   [LighterEventType.CANCEL_LIMIT_ORDER_EVENT]: {
+    contractName: LighterContracts.ORDERBOOK,
     eventSignature: 'CancelLimitOrder(uint32)',
     eventName: 'CancelLimitOrder',
     parseEventFunction: ParseEventFunctions.parseCancelLimitOrderEventData,
   },
   [LighterEventType.SWAP_EVENT]: {
+    contractName: LighterContracts.ORDERBOOK,
     eventSignature: 'Swap(uint32,uint32,address,address,uint256,uint256)',
     eventName: 'Swap',
     parseEventFunction: ParseEventFunctions.parseSwapEventData,
   },
   [LighterEventType.SWAP_EXACT_AMOUNT_EVENT]: {
+    contractName: LighterContracts.ORDERBOOK,
     eventSignature: 'SwapExactAmount(address,address,bool,bool,uint256,uint256)',
     eventName: 'SwapExactAmount',
     parseEventFunction: ParseEventFunctions.parseSwapExactAmountEventData,
   },
   [LighterEventType.FLASH_LOAN_EVENT]: {
+    contractName: LighterContracts.ORDERBOOK,
     eventSignature: 'FlashLoan(address,address,uint256,uint256)',
     eventName: 'FlashLoan',
     parseEventFunction: ParseEventFunctions.parseFlashLoanEventData,
   },
   [LighterEventType.CLAIMABLE_BALANCE_INCREASE_EVENT]: {
+    contractName: LighterContracts.ORDERBOOK,
     eventSignature: 'ClaimableBalanceIncrease(address,uint256,bool)',
     eventName: 'ClaimableBalanceIncrease',
     parseEventFunction: ParseEventFunctions.parseClaimableBalanceIncreaseEventData,
   },
   [LighterEventType.CLAIMABLE_BALANCE_DECREASE_EVENT]: {
+    contractName: LighterContracts.ORDERBOOK,
     eventSignature: 'ClaimableBalanceDecrease(address,uint256,bool)',
     eventName: 'ClaimableBalanceDecrease',
     parseEventFunction: ParseEventFunctions.parseClaimableBalanceDecreaseEventData,
