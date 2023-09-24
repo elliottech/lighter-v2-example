@@ -113,17 +113,56 @@ export const orderDataToString = (orderData: OrderData): string => {
 // FlashLoan action emits FlashLoanEvent
 export enum LighterAction {
   CREATE_LIMIT_ORDER,
-  CREATE_BATCH_LIMIT_ORDER,
+  CREATE_LIMIT_ORDER_BATCH,
   CREATE_IOC_ORDER,
-  CREATE_BATCH_IOC_ORDER,
   CREATE_FOK_ORDER,
-  CREATE_BATCH_FOK_ORDER,
   CANCEL_LIMIT_ORDER,
-  CANCEL_BATCH_LIMIT_ORDER,
+  CANCEL_LIMIT_ORDER_BATCH,
   UPDATE_LIMIT_ORDER,
+  UPDATE_LIMIT_ORDER_BATCH,
   SWAP_EXACT_INPUT_SINGLE,
+  SWAP_EXACT_INPUT_MULTI,
   SWAP_EXACT_OUTPUT_SINGLE,
+  SWAP_EXACT_OUTPUT_MULTI,
   FLASH_LOAN,
+}
+
+export const getOrderTypeFromLighterAction = (lighterAction: LighterAction): OrderType => {
+  switch (lighterAction) {
+    case LighterAction.CREATE_LIMIT_ORDER:
+      return OrderType.LimitOrder
+
+    case LighterAction.CREATE_FOK_ORDER:
+      return OrderType.FoKOrder
+
+    case LighterAction.CREATE_IOC_ORDER:
+      return OrderType.IoCOrder
+
+    default:
+      throw new Error(`LighterAction: ${lighterAction} is not relevant for OrderType lookup`)
+  }
+}
+
+// Function to get the string representation of an enum value
+export const getLighterActionString = (lighterAction: LighterAction): string => {
+  switch (lighterAction) {
+    case LighterAction.CREATE_LIMIT_ORDER:
+      return 'CreateLimitOrder'
+    case LighterAction.CREATE_FOK_ORDER:
+      return 'CreateFoKOrder'
+    case LighterAction.CREATE_IOC_ORDER:
+      return 'CreateIoCOrder'
+    case LighterAction.CANCEL_LIMIT_ORDER:
+      return 'CancelLimitOrder'
+    case LighterAction.FLASH_LOAN:
+      return 'FlashLoan'
+    case LighterAction.SWAP_EXACT_INPUT_SINGLE:
+      return 'SwapExactInputSingle'
+    case LighterAction.SWAP_EXACT_OUTPUT_SINGLE:
+      return 'SwapExactOutputSingle'
+    default:
+      throw new Error('Invalid enum value')
+  }
 }
 
 export enum LighterEventType {

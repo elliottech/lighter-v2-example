@@ -1,6 +1,5 @@
 import {BigNumber} from 'ethers'
-import {Order, OrderData} from '../config'
-import {OrderType} from '../shared'
+import {Order, OrderData, OrderType} from '../config'
 import {IOrderBook} from '../typechain-types'
 
 export const getAllLimitOrdersOfAnAccount = async (

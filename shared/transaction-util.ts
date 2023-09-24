@@ -1,4 +1,5 @@
 import {Provider} from '@ethersproject/providers'
+import {LighterAction, lighterFunctionSignatures} from '../config'
 import {ethers} from 'ethers'
 import {HardhatRuntimeEnvironment} from 'hardhat/types'
 
@@ -23,6 +24,16 @@ export const getTransactionReceipt = async (provider: Provider, transactionHash:
   return txReceipt
 }
 
+export const getTransaction = async (provider: Provider, transactionHash: string) => {
+  const txnDetails = await provider.getTransaction(transactionHash)
+
+  if (!txnDetails) {
+    throw new Error(`Transaction ${transactionHash} not found`)
+  }
+
+  return txnDetails
+}
+
 export const getRevertReason = async (
   transactionReceipt: ethers.providers.TransactionReceipt,
   provider: Provider
@@ -42,17 +53,57 @@ export const getRevertReason = async (
   return revertReason
 }
 
-async function getFunctionSelector(transactionHash: string, hre: HardhatRuntimeEnvironment) {
+export const getFunctionSelector = async (transactionHash: string, hre: HardhatRuntimeEnvironment): Promise<string> => {
   // Get transaction details
-  const tx = await hre.ethers.provider.getTransaction(transactionHash)
-
-  if (!tx) {
-    return 'Transaction not found'
-  }
+  const tx = await getTransaction(hre.ethers.provider, transactionHash)
 
   // Extract input data from the transaction
   const inputData = tx.data
 
   // Take the first 4 bytes (8 characters) as the function selector
   return inputData.slice(0, 10)
+}
+
+export const lookupLighterActionFromFunctionSelector = async (
+  transactionHash: string,
+  hre: HardhatRuntimeEnvironment
+): Promise<LighterAction> => {
+  const functionSelector = await getFunctionSelector(transactionHash, hre)
+
+  switch (functionSelector) {
+    case lighterFunctionSignatures[LighterAction.CREATE_LIMIT_ORDER].functionSelector: {
+      return LighterAction.CREATE_LIMIT_ORDER
+    }
+
+    case lighterFunctionSignatures[LighterAction.CANCEL_LIMIT_ORDER].functionSelector: {
+      return LighterAction.CANCEL_LIMIT_ORDER
+    }
+
+    case lighterFunctionSignatures[LighterAction.UPDATE_LIMIT_ORDER].functionSelector: {
+      return LighterAction.UPDATE_LIMIT_ORDER
+    }
+
+    case lighterFunctionSignatures[LighterAction.CREATE_FOK_ORDER].functionSelector: {
+      return LighterAction.CREATE_FOK_ORDER
+    }
+
+    case lighterFunctionSignatures[LighterAction.CREATE_IOC_ORDER].functionSelector: {
+      return LighterAction.CREATE_IOC_ORDER
+    }
+
+    case lighterFunctionSignatures[LighterAction.FLASH_LOAN].functionSelector: {
+      return LighterAction.FLASH_LOAN
+    }
+
+    case lighterFunctionSignatures[LighterAction.SWAP_EXACT_INPUT_SINGLE].functionSelector: {
+      return LighterAction.SWAP_EXACT_INPUT_SINGLE
+    }
+
+    case lighterFunctionSignatures[LighterAction.SWAP_EXACT_OUTPUT_SINGLE].functionSelector: {
+      return LighterAction.SWAP_EXACT_OUTPUT_SINGLE
+    }
+
+    default:
+      throw new Error(`Unsupported LighterAction`)
+  }
 }

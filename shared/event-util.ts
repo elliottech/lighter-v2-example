@@ -1,6 +1,11 @@
 import '@nomiclabs/hardhat-ethers'
 import {Provider} from '@ethersproject/providers'
-import {getOrderBookAt, getOrderTypeFromValue, getTransactionReceipt} from '../shared'
+import {
+  getOrderBookAt,
+  getOrderTypeFromValue,
+  getTransactionReceipt,
+  lookupLighterActionFromFunctionSelector,
+} from '../shared'
 import {BigNumber, ethers} from 'ethers'
 import {
   LighterEventType,
@@ -11,8 +16,139 @@ import {
   SwapExactAmountEvent,
   ClaimableBalanceIncreaseEvent,
   ClaimableBalanceDecreaseEvent,
-  getLighterEventSignature,
+  lighterEventSignatures,
+  LighterEventWrapper,
+  LighterAction,
 } from '../config'
+
+export const getAllLighterEvents = async (
+  orderBookAddress: string,
+  transactionHash: string,
+  hre: any
+): Promise<LighterEventWrapper> => {
+  //evaluate lighterAction from the function-selector of transaction
+  const lighterAction: LighterAction = await lookupLighterActionFromFunctionSelector(transactionHash, hre)
+
+  let lighterEventWrapper: LighterEventWrapper = {
+    lighterAction: lighterAction,
+    createOrderEvents: [],
+    swapEvents: [],
+    cancelLimitOrderEvents: [],
+    swapExactAmountEvents: [],
+    flashLoanEvents: [],
+    claimableBalanceIncreaseEvents: [],
+    claimableBalanceDecreaseEvents: [],
+  }
+
+  //pull all essential events from the transaction
+  switch (lighterAction) {
+    case LighterAction.CREATE_LIMIT_ORDER:
+    case LighterAction.CREATE_IOC_ORDER:
+    case LighterAction.CREATE_FOK_ORDER:
+    case LighterAction.CREATE_LIMIT_ORDER_BATCH: {
+      const createOrderEvents = await getLighterEventsByEventType(
+        orderBookAddress,
+        transactionHash,
+        LighterEventType.CREATE_ORDER_EVENT,
+        hre
+      )
+      lighterEventWrapper.createOrderEvents = createOrderEvents ? (createOrderEvents as CreateOrderEvent[]) : []
+
+      const swapEvents = await getLighterEventsByEventType(
+        orderBookAddress,
+        transactionHash,
+        LighterEventType.SWAP_EVENT,
+        hre
+      )
+      lighterEventWrapper.swapEvents = swapEvents ? (swapEvents as SwapEvent[]) : []
+
+      return lighterEventWrapper
+    }
+
+    case LighterAction.CANCEL_LIMIT_ORDER:
+    case LighterAction.CANCEL_LIMIT_ORDER_BATCH: {
+      const cancelLimitOrderEvents = await getLighterEventsByEventType(
+        orderBookAddress,
+        transactionHash,
+        LighterEventType.CANCEL_LIMIT_ORDER_EVENT,
+        hre
+      )
+      lighterEventWrapper.cancelLimitOrderEvents = cancelLimitOrderEvents
+        ? (cancelLimitOrderEvents as CancelLimitOrderEvent[])
+        : []
+
+      return lighterEventWrapper
+    }
+
+    case LighterAction.UPDATE_LIMIT_ORDER:
+    case LighterAction.UPDATE_LIMIT_ORDER_BATCH: {
+      const cancelLimitOrderEvents = await getLighterEventsByEventType(
+        orderBookAddress,
+        transactionHash,
+        LighterEventType.CANCEL_LIMIT_ORDER_EVENT,
+        hre
+      )
+      lighterEventWrapper.cancelLimitOrderEvents = cancelLimitOrderEvents
+        ? (cancelLimitOrderEvents as CancelLimitOrderEvent[])
+        : []
+
+      const createOrderEvents = await getLighterEventsByEventType(
+        orderBookAddress,
+        transactionHash,
+        LighterEventType.CREATE_ORDER_EVENT,
+        hre
+      )
+      lighterEventWrapper.createOrderEvents = createOrderEvents ? (createOrderEvents as CreateOrderEvent[]) : []
+
+      const swapEvents = await getLighterEventsByEventType(
+        orderBookAddress,
+        transactionHash,
+        LighterEventType.SWAP_EVENT,
+        hre
+      )
+      lighterEventWrapper.swapEvents = swapEvents ? (swapEvents as SwapEvent[]) : []
+
+      return lighterEventWrapper
+    }
+
+    case LighterAction.FLASH_LOAN: {
+      const flashLoanEvents = await getLighterEventsByEventType(
+        orderBookAddress,
+        transactionHash,
+        LighterEventType.FLASH_LOAN_EVENT,
+        hre
+      )
+      lighterEventWrapper.flashLoanEvents = flashLoanEvents ? (flashLoanEvents as FlashLoanEvent[]) : []
+      return lighterEventWrapper
+    }
+
+    case LighterAction.SWAP_EXACT_INPUT_SINGLE:
+    case LighterAction.SWAP_EXACT_OUTPUT_SINGLE: {
+      const swapEvents = await getLighterEventsByEventType(
+        orderBookAddress,
+        transactionHash,
+        LighterEventType.SWAP_EVENT,
+        hre
+      )
+      lighterEventWrapper.swapEvents = swapEvents ? (swapEvents as SwapEvent[]) : []
+
+      const swapExactAmountEvents = await getLighterEventsByEventType(
+        orderBookAddress,
+        transactionHash,
+        LighterEventType.SWAP_EXACT_AMOUNT_EVENT,
+        hre
+      )
+      lighterEventWrapper.swapExactAmountEvents = swapExactAmountEvents
+        ? (swapExactAmountEvents as SwapExactAmountEvent[])
+        : []
+
+      return lighterEventWrapper
+    }
+
+    default:
+      throw new Error(`Unsupported lighterAction: ${lighterAction}`)
+  }
+}
 
 export const getLighterEventsByEventType = async (
   orderBookAddress: string,
@@ -48,7 +184,7 @@ export const getLighterEventsByEventType = async (
     throw new Error(`Failed to load orderBookContract Instance for: ${orderBookAddress}`)
   }
 
-  let eventSignatureData = getLighterEventSignature(lighterEventType)
+  let eventSignatureData = lighterEventSignatures[lighterEventType]
 
   let eventInterfaceBlock =
     orderbookContract.interface.events[
@@ -79,10 +215,12 @@ export const getLighterEventsByEventType = async (
     .map((log) => eventInterface.parseLog(log))
 
   if (!decodedEventLogs || decodedEventLogs.length == 0 || !decodedEventLogs[0]) {
-    throw new Error(`Failed to lookup for ${eventSignatureData.eventName}`)
+    console.warn(`No ${eventSignatureData.eventName}s for transactionHash: ${transactionHash}`)
   }
 
-  return decodedEventLogs.map((eventData) => eventSignatureData.parseEventFunction(eventData))
+  return decodedEventLogs && decodedEventLogs.length > 0
+    ? decodedEventLogs.map((eventData) => eventSignatureData.parseEventFunction(eventData))
+    : []
 }
 
 export const parseCreateOrderEventData = (eventData: ethers.utils.LogDescription): CreateOrderEvent => {

@@ -29,7 +29,7 @@ export const getOrderTypeString = (value: OrderType): string => {
   }
 }
 
-const lighterConfigs: {
+export const lighterConfigs: {
   [ChainId: string]: LighterConfig
 } = {
   [ChainId.ARBITRUM_GOERLI]: {
@@ -90,60 +90,62 @@ const lighterConfigs: {
   },
 }
 
-const lighterFunctionSignatures: {
+export const lighterFunctionSignatures: {
   [LighterAction: string]: LighterFunctionSignature
 } = {
   [LighterAction.CREATE_LIMIT_ORDER]: {
     contractName: LighterContracts.ROUTER,
     functionSignature: 'createLimitOrder(uint8,uint64,uint64,bool,uint32)',
     functionName: 'createLimitOrder',
-    functionSelector: ethers.utils.id('createLimitOrder(uint8,uint64,uint64,bool,uint32)').substring(0, 8),
+    functionSelector: ethers.utils.id('createLimitOrder(uint8,uint64,uint64,bool,uint32)').substring(0, 10),
   },
   [LighterAction.CANCEL_LIMIT_ORDER]: {
     contractName: LighterContracts.ROUTER,
     functionSignature: 'cancelLimitOrder(uint8,uint32)',
     functionName: 'cancelLimitOrder',
-    functionSelector: ethers.utils.id('cancelLimitOrder(uint8,uint32)').substring(0, 8),
+    functionSelector: ethers.utils.id('cancelLimitOrder(uint8,uint32)').substring(0, 10),
   },
   [LighterAction.UPDATE_LIMIT_ORDER]: {
     contractName: LighterContracts.ROUTER,
     functionSignature: 'updateLimitOrder(uint8,uint32,uint64,uint64,uint32)',
     functionName: 'updateLimitOrder',
-    functionSelector: ethers.utils.id('updateLimitOrder(uint8,uint32,uint64,uint64,uint32)').substring(0, 8),
+    functionSelector: ethers.utils.id('updateLimitOrder(uint8,uint32,uint64,uint64,uint32)').substring(0, 10),
   },
   [LighterAction.FLASH_LOAN]: {
     contractName: LighterContracts.ORDERBOOK,
     functionSignature: 'flashLoan(address,uint256,uint256,bytes)',
     functionName: 'flashLoan',
-    functionSelector: ethers.utils.id('flashLoan(address,uint256,uint256,bytes)').substring(0, 8),
+    functionSelector: ethers.utils.id('flashLoan(address,uint256,uint256,bytes)').substring(0, 10),
   },
   [LighterAction.CREATE_FOK_ORDER]: {
     contractName: LighterContracts.ROUTER,
     functionSignature: 'createFoKOrder(uint8,uint64,uint64,bool)',
     functionName: 'createFoKOrder',
-    functionSelector: ethers.utils.id('createFoKOrder(uint8,uint64,uint64,bool)').substring(0, 8),
+    functionSelector: ethers.utils.id('createFoKOrder(uint8,uint64,uint64,bool)').substring(0, 10),
   },
   [LighterAction.CREATE_IOC_ORDER]: {
     contractName: LighterContracts.ROUTER,
     functionSignature: 'createIoCOrder(uint8,uint64,uint64,bool)',
     functionName: 'createIoCOrder',
-    functionSelector: ethers.utils.id('createIoCOrder(uint8,uint64,uint64,bool)').substring(0, 8),
+    functionSelector: ethers.utils.id('createIoCOrder(uint8,uint64,uint64,bool)').substring(0, 10),
   },
   [LighterAction.SWAP_EXACT_INPUT_SINGLE]: {
     contractName: LighterContracts.ROUTER,
     functionSignature: 'swapExactInputSingle(uint8,bool,uint256,uint256,address,bool)',
     functionName: 'swapExactInputSingle',
-    functionSelector: ethers.utils.id('swapExactInputSingle(uint8,bool,uint256,uint256,address,bool)').substring(0, 8),
+    functionSelector: ethers.utils.id('swapExactInputSingle(uint8,bool,uint256,uint256,address,bool)').substring(0, 10),
   },
   [LighterAction.SWAP_EXACT_OUTPUT_SINGLE]: {
     contractName: LighterContracts.ROUTER,
     functionSignature: 'swapExactOutputSingle(uint8,bool,uint256,uint256,address,bool)',
     functionName: 'swapExactOutputSingle',
-    functionSelector: ethers.utils.id('swapExactOutputSingle(uint8,bool,uint256,uint256,address,bool)').substring(0, 8),
+    functionSelector: ethers.utils
+      .id('swapExactOutputSingle(uint8,bool,uint256,uint256,address,bool)')
+      .substring(0, 10),
   },
 }
 
-const lighterEventSignatures: {
+export const lighterEventSignatures: {
   [LighterEventType: string]: LighterEventSignature
 } = {
   [LighterEventType.CREATE_ORDER_EVENT]: {
@@ -215,8 +217,4 @@ export async function getLighterConfig(forceTestnet?: boolean) {
     throw new Error(`ChainId ${chainId} is not supported`)
   }
   return lighterConfigs[chainId]
-}
-
-export function getLighterEventSignature(lighterEventType: LighterEventType) {
-  return lighterEventSignatures[lighterEventType]
 }
