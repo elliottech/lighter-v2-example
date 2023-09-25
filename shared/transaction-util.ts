@@ -40,7 +40,6 @@ export const getRevertReason = async (
 ): Promise<string> => {
   const errorFunctionSignature = 'LighterV2Swap_NotEnoughOutput()'
   const errorFunctionSelector = ethers.utils.id(errorFunctionSignature).substring(0, 10) // Take the first 8 characters (4 bytes)
-  console.log(`errorFunctionSelector is: ${errorFunctionSelector}`)
   // The transaction reverted, and you can access the revert reason/message
   const reason = await provider.call({
     to: transactionReceipt.contractAddress,
@@ -86,7 +85,7 @@ export const getFunctionSelector = async (transactionHash: string, hre: HardhatR
     '0x18',
   ]
 
-  if (fallbackSelectors.indexOf(fallbackSelector_chunk) >= -1) {
+  if (fallbackSelectors.indexOf(fallbackSelector_chunk) !== -1) {
     return inputData.slice(0, 4)
   }
 

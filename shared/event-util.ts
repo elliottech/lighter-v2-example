@@ -19,26 +19,18 @@ import {
   lighterEventSignatures,
   LighterEventWrapper,
   LighterAction,
+  LighterEvent,
 } from '../config'
 
 export const getAllLighterEvents = async (
   orderBookAddress: string,
   transactionHash: string,
   hre: any
-): Promise<LighterEventWrapper> => {
+): Promise<LighterEvent[]> => {
   //evaluate lighterAction from the function-selector of transaction
   const lighterAction: LighterAction = await lookupLighterActionFromFunctionSelector(transactionHash, hre)
 
-  let lighterEventWrapper: LighterEventWrapper = {
-    lighterAction: lighterAction,
-    createOrderEvents: [],
-    swapEvents: [],
-    cancelLimitOrderEvents: [],
-    swapExactAmountEvents: [],
-    flashLoanEvents: [],
-    claimableBalanceIncreaseEvents: [],
-    claimableBalanceDecreaseEvents: [],
-  }
+  const events = []
 
   //pull all essential events from the transaction
   switch (lighterAction) {
@@ -52,7 +44,10 @@ export const getAllLighterEvents = async (
         LighterEventType.CREATE_ORDER_EVENT,
         hre
       )
-      lighterEventWrapper.createOrderEvents = createOrderEvents ? (createOrderEvents as CreateOrderEvent[]) : []
+
+      if (createOrderEvents) {
+        events.push(...createOrderEvents)
+      }
 
       const swapEvents = await getLighterEventsByEventType(
         orderBookAddress,
@@ -60,9 +55,12 @@ export const getAllLighterEvents = async (
         LighterEventType.SWAP_EVENT,
         hre
       )
-      lighterEventWrapper.swapEvents = swapEvents ? (swapEvents as SwapEvent[]) : []
 
-      return lighterEventWrapper
+      if (swapEvents) {
+        events.push(...swapEvents)
+      }
+
+      break
     }
 
     case LighterAction.CANCEL_LIMIT_ORDER:
@@ -73,11 +71,11 @@ export const getAllLighterEvents = async (
         LighterEventType.CANCEL_LIMIT_ORDER_EVENT,
         hre
       )
-      lighterEventWrapper.cancelLimitOrderEvents = cancelLimitOrderEvents
-        ? (cancelLimitOrderEvents as CancelLimitOrderEvent[])
-        : []
+      if (cancelLimitOrderEvents) {
+        events.push(...cancelLimitOrderEvents)
+      }
 
-      return lighterEventWrapper
+      break
     }
 
     case LighterAction.UPDATE_LIMIT_ORDER:
@@ -88,9 +86,9 @@ export const getAllLighterEvents = async (
         LighterEventType.CANCEL_LIMIT_ORDER_EVENT,
         hre
       )
-      lighterEventWrapper.cancelLimitOrderEvents = cancelLimitOrderEvents
-        ? (cancelLimitOrderEvents as CancelLimitOrderEvent[])
-        : []
+      if (cancelLimitOrderEvents) {
+        events.push(...cancelLimitOrderEvents)
+      }
 
       const createOrderEvents = await getLighterEventsByEventType(
         orderBookAddress,
@@ -98,17 +96,20 @@ export const getAllLighterEvents = async (
         LighterEventType.CREATE_ORDER_EVENT,
         hre
       )
-      lighterEventWrapper.createOrderEvents = createOrderEvents ? (createOrderEvents as CreateOrderEvent[]) : []
-
+      if (createOrderEvents) {
+        events.push(...createOrderEvents)
+      }
       const swapEvents = await getLighterEventsByEventType(
         orderBookAddress,
         transactionHash,
         LighterEventType.SWAP_EVENT,
         hre
       )
-      lighterEventWrapper.swapEvents = swapEvents ? (swapEvents as SwapEvent[]) : []
+      if (swapEvents) {
+        events.push(...swapEvents)
+      }
 
-      return lighterEventWrapper
+      break
     }
 
     case LighterAction.FLASH_LOAN: {
@@ -118,8 +119,11 @@ export const getAllLighterEvents = async (
         LighterEventType.FLASH_LOAN_EVENT,
         hre
       )
-      lighterEventWrapper.flashLoanEvents = flashLoanEvents ? (flashLoanEvents as FlashLoanEvent[]) : []
-      return lighterEventWrapper
+      if (flashLoanEvents) {
+        events.push(...flashLoanEvents)
+      }
+
+      break
     }
 
     case LighterAction.SWAP_EXACT_INPUT_SINGLE:
@@ -130,24 +134,27 @@ export const getAllLighterEvents = async (
         LighterEventType.SWAP_EVENT,
         hre
       )
-      lighterEventWrapper.swapEvents = swapEvents ? (swapEvents as SwapEvent[]) : []
-
+      if (swapEvents) {
+        events.push(...swapEvents)
+      }
       const swapExactAmountEvents = await getLighterEventsByEventType(
         orderBookAddress,
         transactionHash,
         LighterEventType.SWAP_EXACT_AMOUNT_EVENT,
         hre
       )
-      lighterEventWrapper.swapExactAmountEvents = swapExactAmountEvents
-        ? (swapExactAmountEvents as SwapExactAmountEvent[])
-        : []
+      if (swapExactAmountEvents) {
+        events.push(...swapExactAmountEvents)
+      }
 
-      return lighterEventWrapper
+      break
     }
 
     default:
       throw new Error(`Unsupported lighterAction: ${lighterAction}`)
   }
+
+  return events
 }
 
 export const getLighterEventsByEventType = async (

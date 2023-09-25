@@ -232,6 +232,15 @@ export interface LighterEventWrapper {
   claimableBalanceDecreaseEvents: ClaimableBalanceDecreaseEvent[]
 }
 
+export type LighterEvent =
+  | CreateOrderEvent
+  | SwapEvent
+  | CancelLimitOrderEvent
+  | SwapExactAmountEvent
+  | FlashLoanEvent
+  | ClaimableBalanceIncreaseEvent
+  | ClaimableBalanceDecreaseEvent
+
 export interface CreateOrderEvent {
   owner: string
   id: BigNumber
