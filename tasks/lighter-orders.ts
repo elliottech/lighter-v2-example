@@ -9,6 +9,7 @@ import {
   parseBasePrice,
   getOrderBookConfigFromAddress,
   getAllLighterEvents,
+  getOrderFallbackData,
 } from '../shared'
 import {OrderType, getOrderTypeString} from '../config'
 import {HardhatRuntimeEnvironment} from 'hardhat/types'
@@ -75,6 +76,36 @@ export const executeOrderCreation = async (
   }
 }
 
+export const executeFallbackOrderCreation = async (
+  orderbookname: string,
+  orderType: OrderType,
+  amount: BigNumber,
+  price: BigNumber,
+  isask: boolean,
+  hre: HardhatRuntimeEnvironment
+) => {
+  const lighterConfig = await getLighterConfig()
+  const orderBookAddress = lighterConfig.OrderBooks[orderbookname as OrderBookKey] as string
+  const orderBookConfig = await getOrderBookConfigFromAddress(orderBookAddress, hre)
+  const amountBase = parseBaseAmount(amount, orderBookConfig.token0Precision, orderBookConfig.sizeTick)
+  if (!amountBase || amountBase.eq(BigNumber.from(0))) {
+    throw new Error(`Invalid amountBase ${amountBase}`)
+  }
+  const priceBase = parseBasePrice(price, orderBookConfig.token1Precision, orderBookConfig.priceTick)
+  if (!priceBase || priceBase.eq(BigNumber.from(0))) {
+    throw new Error(`Invalid PriceBase ${priceBase}`)
+  }
+
+  const txData = getOrderFallbackData(orderBookConfig.orderBookId, orderType, amountBase, priceBase, isask)
+
+  const signers = await hre.ethers.getSigners()
+
+  await signers[0].sendTransaction({
+    to: lighterConfig.Router,
+    data: txData,
+  })
+}
+
 // create limit-order
 // npx hardhat createOrder --orderbookname WETH-USDC --ordertype 0 --amount 1 --price 2000 --isask true --network arbgoerli
 // npx hardhat createOrder --orderbookname WETH-USDC --amount 0.2 --price 1975.55 --isask true --network arbgoerli
@@ -83,7 +114,7 @@ export const executeOrderCreation = async (
 // npx hardhat createOrder --orderbookname WETH-USDC --ordertype 2 --amount 0.2 --price 1975.55 --isask false --network arbgoerli
 
 //create ioc-order
-// npx hardhat createOrder --orderbookname WETH-USDC --ordertype 3 --amount 0.2 --price 1975.55 --isask false --network arbgoerli
+// npx hardhat createOrder --orderbookname WETH-USDC --ordertype 0 --amount 0.2 --price 1975.55 --isask true --network arbgoerli
 task('createOrder')
   .addParam('orderbookname')
   .addParam('ordertype', 'orderType can take values: 0 for fokOrder, 1 for iocOrder and 2 for limitOrder', 2, int, true)
@@ -92,5 +123,5 @@ task('createOrder')
   .addParam('isask', 'whatever or not order is ask', null, boolean)
   .setDescription('create FillOrKill Order via Router')
   .setAction(async ({orderbookname, ordertype, amount, price, isask}, hre) => {
-    await executeOrderCreation(orderbookname, ordertype as OrderType, amount, price, isask, hre)
+    await executeFallbackOrderCreation(orderbookname, ordertype as OrderType, amount, price, isask, hre)
   })
