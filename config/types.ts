@@ -155,43 +155,6 @@ export const getOrderTypeFromLighterAction = (lighterAction: LighterAction): Ord
   }
 }
 
-// Function to get the string representation of an enum value
-export const getLighterActionString = (lighterAction: LighterAction): string => {
-  switch (lighterAction) {
-    case LighterAction.CREATE_LIMIT_ORDER:
-    case LighterAction.CREATE_LIMIT_ORDER_FALLBACK:
-      return 'CreateLimitOrder'
-    case LighterAction.CREATE_LIMIT_ORDER_BATCH:
-    case LighterAction.CREATE_LIMIT_ORDER_BATCH_FALLBACK:
-      return 'CreateLimitOrderBatch'
-    case LighterAction.CREATE_FOK_ORDER:
-    case LighterAction.CREATE_FOK_ORDER_FALLBACK:
-      return 'CreateFoKOrder'
-    case LighterAction.CREATE_IOC_ORDER:
-    case LighterAction.CREATE_IOC_ORDER_FALLBACK:
-      return 'CreateIoCOrder'
-    case LighterAction.CANCEL_LIMIT_ORDER:
-    case LighterAction.CANCEL_LIMIT_ORDER_FALLBACK:
-      return 'CancelLimitOrder'
-    case LighterAction.CANCEL_LIMIT_ORDER_BATCH:
-    case LighterAction.CANCEL_LIMIT_ORDER_BATCH_FALLBACK:
-      return 'CancelLimitOrderBatch'
-    case LighterAction.UPDATE_LIMIT_ORDER:
-    case LighterAction.UPDATE_LIMIT_ORDER_FALLBACK:
-      return 'UpdateLimitOrder'
-    case LighterAction.FLASH_LOAN:
-      return 'FlashLoan'
-    case LighterAction.SWAP_EXACT_INPUT_SINGLE:
-    case LighterAction.SWAP_EXACT_INPUT_SINGLE_FALLBACK:
-      return 'SwapExactInputSingle'
-    case LighterAction.SWAP_EXACT_OUTPUT_SINGLE:
-    case LighterAction.SWAP_EXACT_OUTPUT_SINGLE_FALLBACK:
-      return 'SwapExactOutputSingle'
-    default:
-      throw new Error('Invalid enum value')
-  }
-}
-
 export enum LighterEventType {
   CREATE_ORDER_EVENT,
   CANCEL_LIMIT_ORDER_EVENT,
