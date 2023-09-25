@@ -1,6 +1,6 @@
 import {task} from 'hardhat/config'
 import {LighterAction, OrderBookConfig, getLighterConfig, lighterFunctionSignatures} from '../config'
-import {getAllLighterEvents, getOrderBookConfigFromOrderBookId, getOrderBookId} from '../shared'
+import {getAllLighterEvents, getOrderBookConfigFromOrderBookId, getOrderBookId, printLighterEvents} from '../shared'
 
 // npx hardhat getAllLighterEvents --transactionhash '0x72568e681288efbb79189945ce35c22676133e92c6e83e59737fdc5d2c00011f' --network arbgoerli
 task('getAllLighterEvents')
@@ -19,12 +19,10 @@ task('getAllLighterEvents')
     )
 
     const lighterEvents = await getAllLighterEvents(orderBookConfig.orderBookAddress, transactionhash, hre)
+
+    const eventsAsString = lighterEvents.map((lighterEvent) => printLighterEvents(lighterEvent))
     console.log(
-      `${lighterEvents.length} lighter-events emitted for transactionHash -> ${transactionhash}:\n\n ${JSON.stringify(
-        lighterEvents,
-        null,
-        2
-      )}`
+      `${lighterEvents.length} lighter-events emitted for transactionHash -> ${transactionhash}:\n\n ${eventsAsString}`
     )
   })
 

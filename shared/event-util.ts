@@ -19,6 +19,13 @@ import {
   lighterEventSignatures,
   LighterAction,
   LighterEvent,
+  CREATE_ORDER_EVENT_NAME,
+  CLAIMABLE_BALANCE_INCREASE_EVENT,
+  CANCEL_LIMIT_ORDER_EVENT_NAME,
+  CLAIMABLE_BALANCE_DECREASE_EVENT,
+  FLASH_LOAN_EVENT_NAME,
+  SWAP_EVENT_NAME,
+  SWAP_EXACT_AMOUNT_EVENT_NAME,
 } from '../config'
 
 export const getAllLighterEvents = async (
@@ -337,4 +344,106 @@ export const ParseEventFunctions = {
   parseFlashLoanEventData,
   parseClaimableBalanceIncreaseEventData,
   parseClaimableBalanceDecreaseEventData,
+}
+
+export const printLighterEvents = (lighterEvent: LighterEvent): string => {
+  switch (lighterEvent.eventName) {
+    case CREATE_ORDER_EVENT_NAME:
+      return createOrderEventToString(lighterEvent as CreateOrderEvent)
+
+    case CANCEL_LIMIT_ORDER_EVENT_NAME:
+      return cancelLimitOrderEventToString(lighterEvent as CancelLimitOrderEvent)
+
+    case SWAP_EVENT_NAME:
+      return swapEventToString(lighterEvent as SwapEvent)
+
+    case SWAP_EXACT_AMOUNT_EVENT_NAME:
+      return swapExactAmountEventToString(lighterEvent as SwapExactAmountEvent)
+
+    case FLASH_LOAN_EVENT_NAME:
+      return flashLoanEventToString(lighterEvent as FlashLoanEvent)
+
+    case CLAIMABLE_BALANCE_INCREASE_EVENT:
+      return claimableBalanceIncreaseEventToString(lighterEvent as ClaimableBalanceIncreaseEvent)
+
+    case CLAIMABLE_BALANCE_DECREASE_EVENT:
+      return claimableBalanceDecreaseEventToString(lighterEvent as ClaimableBalanceDecreaseEvent)
+
+    default:
+      return ''
+  }
+}
+
+// Implement a utility function to convert BigNumber properties to strings
+function createOrderEventToString(event: CreateOrderEvent): string {
+  return `\n{
+    eventName: ${event.eventName},
+    owner: ${event.owner},
+    id: ${event.id.toString()},
+    amount0Base: ${event.amount0Base.toString()},
+    priceBase: ${event.priceBase.toString()},
+    isAsk: ${event.isAsk},
+    orderType: ${event.orderType}
+  }\n`
+}
+
+// Implement custom toString functions for each event type
+function cancelLimitOrderEventToString(event: CancelLimitOrderEvent): string {
+  return `\n{
+    eventName: ${event.eventName},
+    id: ${event.id.toString()}
+  }\n`
+}
+
+function swapEventToString(event: SwapEvent): string {
+  return `\n{
+    eventName: ${event.eventName},
+    askId: ${event.askId.toString()},
+    bidId: ${event.bidId.toString()},
+    askOwner: ${event.askOwner},
+    bidOwner: ${event.bidOwner},
+    amount0: ${event.amount0.toString()},
+    amount1: ${event.amount1.toString()}
+  }\n`
+}
+
+function swapExactAmountEventToString(event: SwapExactAmountEvent): string {
+  return `\n{
+    eventName: ${event.eventName},
+    sender: ${event.sender},
+    recipient: ${event.recipient},
+    isExactInput: ${event.isExactInput},
+    isAsk: ${event.isAsk},
+    swapAmount0: ${event.swapAmount0.toString()},
+    swapAmount1: ${event.swapAmount1.toString()}
+  }\n`
+}
+
+// Implement custom toString functions for each event type
+function flashLoanEventToString(event: FlashLoanEvent): string {
+  return `\n{
+    eventName: ${event.eventName},
+    sender: ${event.sender},
+    recipient: ${event.recipient},
+    amount0: ${event.amount0.toString()},
+    amount1: ${event.amount1.toString()}
+  }\n`
+}
+
+function claimableBalanceIncreaseEventToString(event: ClaimableBalanceIncreaseEvent): string {
+  return `\n{
+    eventName: ${event.eventName},
+    owner: ${event.owner},
+    amountDelta: ${event.amountDelta.toString()},
+    isToken0: ${event.isToken0}
+  }\n`
+}
+
+function claimableBalanceDecreaseEventToString(event: ClaimableBalanceDecreaseEvent): string {
+  return `\n{
+    eventName: ${event.eventName},
+    owner: ${event.owner},
+    amountDelta: ${event.amountDelta.toString()},
+    isToken0: ${event.isToken0}
+  }\n`
 }
