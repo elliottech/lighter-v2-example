@@ -1,6 +1,6 @@
 import {Provider} from '@ethersproject/providers'
 import {LighterAction, lighterFunctionSignatures} from '../config'
-import {ethers} from 'ethers'
+import {BigNumber, ethers} from 'ethers'
 import {HardhatRuntimeEnvironment} from 'hardhat/types'
 
 export const isSuccessful = async (provider: Provider, transactionHash: string): Promise<boolean> => {
@@ -62,6 +62,20 @@ export const getFunctionSelector = async (transactionHash: string, hre: HardhatR
 
   // Take the first 4 bytes (8 characters) as the function selector
   return inputData.slice(0, 10)
+}
+
+export const getOrderBookId = async (transactionHash: string, hre: HardhatRuntimeEnvironment): Promise<BigNumber> => {
+  // Get transaction details
+  const tx = await getTransaction(hre.ethers.provider, transactionHash)
+
+  // Extract input data from the transaction
+  const inputData = tx.data
+
+  const orderBookIdHex = inputData.slice(10, 65)
+  const orderBookId = parseInt(orderBookIdHex, 16)
+
+  // Take the first 4 bytes (8 characters) as the function selector
+  return BigNumber.from(orderBookId)
 }
 
 export const lookupLighterActionFromFunctionSelector = async (

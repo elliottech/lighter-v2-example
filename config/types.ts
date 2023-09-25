@@ -1,4 +1,4 @@
-import {BigNumber, ethers} from 'ethers'
+import {BigNumber} from 'ethers'
 
 export enum OrderType {
   LimitOrder,
@@ -40,6 +40,7 @@ export interface LighterConfig {
 }
 
 export interface OrderBookConfig {
+  orderBookAddress: string
   orderBookId: BigNumber
   nextOrderId: BigNumber
   sizeTick: BigNumber
@@ -113,17 +114,28 @@ export const orderDataToString = (orderData: OrderData): string => {
 // FlashLoan action emits FlashLoanEvent
 export enum LighterAction {
   CREATE_LIMIT_ORDER,
+  CREATE_LIMIT_ORDER_FALLBACK,
   CREATE_LIMIT_ORDER_BATCH,
+  CREATE_LIMIT_ORDER_BATCH_FALLBACK,
   CREATE_IOC_ORDER,
+  CREATE_IOC_ORDER_FALLBACK,
   CREATE_FOK_ORDER,
+  CREATE_FOK_ORDER_FALLBACK,
   CANCEL_LIMIT_ORDER,
+  CANCEL_LIMIT_ORDER_FALLBACK,
   CANCEL_LIMIT_ORDER_BATCH,
+  CANCEL_LIMIT_ORDER_BATCH_FALLBACK,
   UPDATE_LIMIT_ORDER,
+  UPDATE_LIMIT_ORDER_FALLBACK,
   UPDATE_LIMIT_ORDER_BATCH,
   SWAP_EXACT_INPUT_SINGLE,
+  SWAP_EXACT_INPUT_SINGLE_FALLBACK,
   SWAP_EXACT_INPUT_MULTI,
+  SWAP_EXACT_INPUT_MULTI_FALLBACK,
   SWAP_EXACT_OUTPUT_SINGLE,
+  SWAP_EXACT_OUTPUT_SINGLE_FALLBACK,
   SWAP_EXACT_OUTPUT_MULTI,
+  SWAP_EXACT_OUTPUT_MULTI_FALLBACK,
   FLASH_LOAN,
 }
 
@@ -147,18 +159,33 @@ export const getOrderTypeFromLighterAction = (lighterAction: LighterAction): Ord
 export const getLighterActionString = (lighterAction: LighterAction): string => {
   switch (lighterAction) {
     case LighterAction.CREATE_LIMIT_ORDER:
+    case LighterAction.CREATE_LIMIT_ORDER_FALLBACK:
       return 'CreateLimitOrder'
+    case LighterAction.CREATE_LIMIT_ORDER_BATCH:
+    case LighterAction.CREATE_LIMIT_ORDER_BATCH_FALLBACK:
+      return 'CreateLimitOrderBatch'
     case LighterAction.CREATE_FOK_ORDER:
+    case LighterAction.CREATE_FOK_ORDER_FALLBACK:
       return 'CreateFoKOrder'
     case LighterAction.CREATE_IOC_ORDER:
+    case LighterAction.CREATE_IOC_ORDER_FALLBACK:
       return 'CreateIoCOrder'
     case LighterAction.CANCEL_LIMIT_ORDER:
+    case LighterAction.CANCEL_LIMIT_ORDER_FALLBACK:
       return 'CancelLimitOrder'
+    case LighterAction.CANCEL_LIMIT_ORDER_BATCH:
+    case LighterAction.CANCEL_LIMIT_ORDER_BATCH_FALLBACK:
+      return 'CancelLimitOrderBatch'
+    case LighterAction.UPDATE_LIMIT_ORDER:
+    case LighterAction.UPDATE_LIMIT_ORDER_FALLBACK:
+      return 'UpdateLimitOrder'
     case LighterAction.FLASH_LOAN:
       return 'FlashLoan'
     case LighterAction.SWAP_EXACT_INPUT_SINGLE:
+    case LighterAction.SWAP_EXACT_INPUT_SINGLE_FALLBACK:
       return 'SwapExactInputSingle'
     case LighterAction.SWAP_EXACT_OUTPUT_SINGLE:
+    case LighterAction.SWAP_EXACT_OUTPUT_SINGLE_FALLBACK:
       return 'SwapExactOutputSingle'
     default:
       throw new Error('Invalid enum value')

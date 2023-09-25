@@ -69,6 +69,7 @@ export const getOrderBookConfig = async (
   token0Contract: IERC20Metadata,
   token1Contract: IERC20Metadata
 ): Promise<OrderBookConfig> => {
+  const orderBookAddress = orderBookContract.address
   const orderBookId = await orderBookContract.orderBookId()
   const orderIdCounter = await orderBookContract.orderIdCounter()
   const sizeTick = await orderBookContract.sizeTick()
@@ -87,6 +88,7 @@ export const getOrderBookConfig = async (
   const token1Precision = await token1Contract.decimals()
 
   return {
+    orderBookAddress,
     orderBookId: BigNumber.from(orderBookId),
     nextOrderId: BigNumber.from(orderIdCounter),
     sizeTick,

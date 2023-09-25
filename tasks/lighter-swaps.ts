@@ -1,7 +1,7 @@
 import {task} from 'hardhat/config'
 import {boolean} from 'hardhat/internal/core/params/argumentTypes'
 import {OrderBookKey, getLighterConfig} from '../config'
-import {isSuccessful, getRouterAt, getSwapExactAmountEvent, parseAmount, getOrderBookConfigFromAddress} from '../shared'
+import {isSuccessful, getRouterAt, parseAmount, getOrderBookConfigFromAddress, getAllLighterEvents} from '../shared'
 
 // npx hardhat swapExactInputSingle --orderbookname WETH-USDC --isask false --exactinput 2000 --minoutput 1 --recipient '0xf5306fc60C48E3E2fBf9262D699Cb05C4910e6D9' --unwrap false --network arbgoerli
 task('swapExactInputSingle')
@@ -32,7 +32,7 @@ task('swapExactInputSingle')
     const successIndicator = await isSuccessful(hre.ethers.provider, tx.hash)
 
     if (successIndicator) {
-      const swapExactAmountEvents = await getSwapExactAmountEvent(orderBookAddress, tx.hash, hre)
+      const swapExactAmountEvents = await getAllLighterEvents(orderBookAddress, tx.hash, hre)
 
       console.log(
         `swapExactInputSingle Transaction: ${
@@ -77,7 +77,7 @@ task('swapExactOutputSingle')
     const successIndicator = await isSuccessful(hre.ethers.provider, tx.hash)
 
     if (successIndicator) {
-      const swapExactAmountEvents = await getSwapExactAmountEvent(orderBookAddress, tx.hash, hre)
+      const swapExactAmountEvents = await getAllLighterEvents(orderBookAddress, tx.hash, hre)
 
       console.log(
         `swapExactOutputSingle Transaction: ${
