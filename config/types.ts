@@ -177,13 +177,6 @@ export interface LighterEventSignature {
   parseEventFunction: any
 }
 
-export interface LighterFunctionSignature {
-  contractName: LighterContracts
-  functionSignature: string
-  functionName: string
-  functionSelector: string
-}
-
 export type LighterEvent =
   | CreateOrderEvent
   | SwapEvent

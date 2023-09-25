@@ -1,11 +1,6 @@
 import '@nomiclabs/hardhat-ethers'
 import {Provider} from '@ethersproject/providers'
-import {
-  getOrderBookAt,
-  getOrderTypeFromValue,
-  getTransactionReceipt,
-  lookupLighterActionFromFunctionSelector,
-} from '../shared'
+import {getOrderBookAt, getOrderTypeFromValue, getTransactionReceipt} from '../shared'
 import {BigNumber, ethers} from 'ethers'
 import {
   LighterEventType,
@@ -17,7 +12,6 @@ import {
   ClaimableBalanceIncreaseEvent,
   ClaimableBalanceDecreaseEvent,
   lighterEventSignatures,
-  LighterAction,
   LighterEvent,
   CREATE_ORDER_EVENT_NAME,
   CLAIMABLE_BALANCE_INCREASE_EVENT,
@@ -33,131 +27,55 @@ export const getAllLighterEvents = async (
   transactionHash: string,
   hre: any
 ): Promise<LighterEvent[]> => {
-  //evaluate lighterAction from the function-selector of transaction
-  const lighterAction: LighterAction = await lookupLighterActionFromFunctionSelector(transactionHash, hre)
-
   const events = []
 
-  //pull all essential events from the transaction
-  switch (lighterAction) {
-    case LighterAction.CREATE_LIMIT_ORDER:
-    case LighterAction.CREATE_IOC_ORDER:
-    case LighterAction.CREATE_FOK_ORDER:
-    case LighterAction.CREATE_LIMIT_ORDER_BATCH: {
-      const createOrderEvents = await getLighterEventsByEventType(
-        orderBookAddress,
-        transactionHash,
-        LighterEventType.CREATE_ORDER_EVENT,
-        hre
-      )
+  const cancelLimitOrderEvents = await getLighterEventsByEventType(
+    orderBookAddress,
+    transactionHash,
+    LighterEventType.CANCEL_LIMIT_ORDER_EVENT,
+    hre
+  )
+  if (cancelLimitOrderEvents) {
+    events.push(...cancelLimitOrderEvents)
+  }
 
-      if (createOrderEvents) {
-        events.push(...createOrderEvents)
-      }
+  const createOrderEvents = await getLighterEventsByEventType(
+    orderBookAddress,
+    transactionHash,
+    LighterEventType.CREATE_ORDER_EVENT,
+    hre
+  )
+  if (createOrderEvents) {
+    events.push(...createOrderEvents)
+  }
 
-      const swapEvents = await getLighterEventsByEventType(
-        orderBookAddress,
-        transactionHash,
-        LighterEventType.SWAP_EVENT,
-        hre
-      )
+  const flashLoanEvents = await getLighterEventsByEventType(
+    orderBookAddress,
+    transactionHash,
+    LighterEventType.FLASH_LOAN_EVENT,
+    hre
+  )
+  if (flashLoanEvents) {
+    events.push(...flashLoanEvents)
+  }
 
-      if (swapEvents) {
-        events.push(...swapEvents)
-      }
-
-      break
-    }
-
-    case LighterAction.CANCEL_LIMIT_ORDER:
-    case LighterAction.CANCEL_LIMIT_ORDER_BATCH: {
-      const cancelLimitOrderEvents = await getLighterEventsByEventType(
-        orderBookAddress,
-        transactionHash,
-        LighterEventType.CANCEL_LIMIT_ORDER_EVENT,
-        hre
-      )
-      if (cancelLimitOrderEvents) {
-        events.push(...cancelLimitOrderEvents)
-      }
-
-      break
-    }
-
-    case LighterAction.UPDATE_LIMIT_ORDER:
-    case LighterAction.UPDATE_LIMIT_ORDER_BATCH: {
-      const cancelLimitOrderEvents = await getLighterEventsByEventType(
-        orderBookAddress,
-        transactionHash,
-        LighterEventType.CANCEL_LIMIT_ORDER_EVENT,
-        hre
-      )
-      if (cancelLimitOrderEvents) {
-        events.push(...cancelLimitOrderEvents)
-      }
-
-      const createOrderEvents = await getLighterEventsByEventType(
-        orderBookAddress,
-        transactionHash,
-        LighterEventType.CREATE_ORDER_EVENT,
-        hre
-      )
-      if (createOrderEvents) {
-        events.push(...createOrderEvents)
-      }
-      const swapEvents = await getLighterEventsByEventType(
-        orderBookAddress,
-        transactionHash,
-        LighterEventType.SWAP_EVENT,
-        hre
-      )
-      if (swapEvents) {
-        events.push(...swapEvents)
-      }
-
-      break
-    }
-
-    case LighterAction.FLASH_LOAN: {
-      const flashLoanEvents = await getLighterEventsByEventType(
-        orderBookAddress,
-        transactionHash,
-        LighterEventType.FLASH_LOAN_EVENT,
-        hre
-      )
-      if (flashLoanEvents) {
-        events.push(...flashLoanEvents)
-      }
-
-      break
-    }
-
-    case LighterAction.SWAP_EXACT_INPUT_SINGLE:
-    case LighterAction.SWAP_EXACT_OUTPUT_SINGLE: {
-      const swapEvents = await getLighterEventsByEventType(
-        orderBookAddress,
-        transactionHash,
-        LighterEventType.SWAP_EVENT,
-        hre
-      )
-      if (swapEvents) {
-        events.push(...swapEvents)
-      }
-      const swapExactAmountEvents = await getLighterEventsByEventType(
-        orderBookAddress,
-        transactionHash,
-        LighterEventType.SWAP_EXACT_AMOUNT_EVENT,
-        hre
-      )
-      if (swapExactAmountEvents) {
-        events.push(...swapExactAmountEvents)
-      }
-
-      break
-    }
-
-    default:
-      throw new Error(`Unsupported lighterAction: ${lighterAction}`)
+  const swapEvents = await getLighterEventsByEventType(
+    orderBookAddress,
+    transactionHash,
+    LighterEventType.SWAP_EVENT,
+    hre
+  )
+  if (swapEvents) {
+    events.push(...swapEvents)
+  }
+  const swapExactAmountEvents = await getLighterEventsByEventType(
+    orderBookAddress,
+    transactionHash,
+    LighterEventType.SWAP_EXACT_AMOUNT_EVENT,
+    hre
+  )
+  if (swapExactAmountEvents) {
+    events.push(...swapExactAmountEvents)
   }
 
   return events
