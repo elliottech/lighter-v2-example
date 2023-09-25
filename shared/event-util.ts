@@ -17,7 +17,6 @@ import {
   ClaimableBalanceIncreaseEvent,
   ClaimableBalanceDecreaseEvent,
   lighterEventSignatures,
-  LighterEventWrapper,
   LighterAction,
   LighterEvent,
 } from '../config'
@@ -236,6 +235,7 @@ export const parseCreateOrderEventData = (eventData: ethers.utils.LogDescription
   }
 
   return {
+    eventName: 'CreateOrderEvent',
     owner: eventData.args[0].toString(),
     id: BigNumber.from(eventData.args[1].toString()),
     amount0Base: BigNumber.from(eventData.args[2].toString()),
@@ -251,6 +251,7 @@ function parseCancelLimitOrderEventData(eventData: ethers.utils.LogDescription):
   }
 
   return {
+    eventName: 'CancelLimitOrderEvent',
     id: BigNumber.from(eventData.args[0].toString()),
   }
 }
@@ -261,6 +262,7 @@ function parseSwapEventData(eventData: ethers.utils.LogDescription): SwapEvent {
   }
 
   return {
+    eventName: 'SwapEvent',
     askId: BigNumber.from(eventData.args[0].toString()),
     bidId: BigNumber.from(eventData.args[1].toString()),
     askOwner: eventData.args[2].toString(),
@@ -272,6 +274,7 @@ function parseSwapEventData(eventData: ethers.utils.LogDescription): SwapEvent {
 
 export const parseSwapExactAmountEventData = (eventData: ethers.utils.LogDescription): SwapExactAmountEvent => {
   return {
+    eventName: 'SwapExactAmountEvent',
     sender: eventData.args[0].toString(),
     recipient: eventData.args[1].toString(),
     isExactInput: eventData.args[2].toString(),
@@ -287,6 +290,7 @@ export const parseFlashLoanEventData = (eventData: ethers.utils.LogDescription):
   }
 
   return {
+    eventName: 'FlashLoanEvent',
     sender: eventData.args[0].toString(),
     recipient: eventData.args[1].toString(),
     amount0: BigNumber.from(eventData.args[2]),
@@ -302,6 +306,7 @@ export const parseClaimableBalanceIncreaseEventData = (
   }
 
   return {
+    eventName: 'ClaimableBalanceIncreaseEvent',
     owner: eventData.args[0].toString(),
     amountDelta: BigNumber.from(eventData.args[1].toString()),
     isToken0: eventData.args[2].toString(),
@@ -316,6 +321,7 @@ export const parseClaimableBalanceDecreaseEventData = (
   }
 
   return {
+    eventName: 'ClaimableBalanceDecreaseEvent',
     owner: eventData.args[0].toString(),
     amountDelta: BigNumber.from(eventData.args[1].toString()),
     isToken0: eventData.args[2].toString(),

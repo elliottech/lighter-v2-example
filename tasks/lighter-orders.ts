@@ -1,7 +1,7 @@
 import {task} from 'hardhat/config'
 import {boolean, int} from 'hardhat/internal/core/params/argumentTypes'
 import {BigNumber} from 'ethers'
-import {LighterEventWrapper, OrderBookKey, getLighterConfig} from '../config'
+import {OrderBookKey, getLighterConfig} from '../config'
 import {
   isSuccessful,
   getRouterAt,
@@ -63,10 +63,10 @@ export const executeOrderCreation = async (
   const successIndicator = await isSuccessful(hre.ethers.provider, tx.hash)
 
   if (successIndicator) {
-    const lighterEventWrapper: LighterEventWrapper = await getAllLighterEvents(orderBookAddress, tx.hash, hre)
+    const lighterEvents = await getAllLighterEvents(orderBookAddress, tx.hash, hre)
     console.log(
       `Create-${orderTypeDescription} Transaction: ${tx.hash} is successful and OrderEvent: ${JSON.stringify(
-        lighterEventWrapper,
+        lighterEvents,
         null,
         2
       )} emitted`

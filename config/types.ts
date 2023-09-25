@@ -221,17 +221,6 @@ export interface LighterFunctionSignature {
   functionSelector: string
 }
 
-export interface LighterEventWrapper {
-  lighterAction: LighterAction
-  createOrderEvents: CreateOrderEvent[]
-  swapEvents: SwapEvent[]
-  cancelLimitOrderEvents: CancelLimitOrderEvent[]
-  swapExactAmountEvents: SwapExactAmountEvent[]
-  flashLoanEvents: FlashLoanEvent[]
-  claimableBalanceIncreaseEvents: ClaimableBalanceIncreaseEvent[]
-  claimableBalanceDecreaseEvents: ClaimableBalanceDecreaseEvent[]
-}
-
 export type LighterEvent =
   | CreateOrderEvent
   | SwapEvent
@@ -242,6 +231,7 @@ export type LighterEvent =
   | ClaimableBalanceDecreaseEvent
 
 export interface CreateOrderEvent {
+  eventName: string
   owner: string
   id: BigNumber
   amount0Base: BigNumber
@@ -251,6 +241,7 @@ export interface CreateOrderEvent {
 }
 
 export interface SwapEvent {
+  eventName: string
   askId: BigNumber
   bidId: BigNumber
   askOwner: string
@@ -260,10 +251,12 @@ export interface SwapEvent {
 }
 
 export interface CancelLimitOrderEvent {
+  eventName: string
   id: BigNumber
 }
 
 export interface SwapExactAmountEvent {
+  eventName: string
   sender: string
   recipient: string
   isExactInput: boolean
@@ -273,6 +266,7 @@ export interface SwapExactAmountEvent {
 }
 
 export interface FlashLoanEvent {
+  eventName: string
   sender: string
   recipient: string
   amount0: BigNumber
@@ -280,12 +274,14 @@ export interface FlashLoanEvent {
 }
 
 export interface ClaimableBalanceIncreaseEvent {
+  eventName: string
   owner: string
   amountDelta: BigNumber
   isToken0: boolean
 }
 
 export interface ClaimableBalanceDecreaseEvent {
+  eventName: string
   owner: string
   amountDelta: BigNumber
   isToken0: boolean

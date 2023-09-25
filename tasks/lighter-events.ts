@@ -19,7 +19,13 @@ task('getAllLighterEvents')
     )
 
     const lighterEvents = await getAllLighterEvents(orderBookConfig.orderBookAddress, transactionhash, hre)
-    console.log(`OrderEvent: ${JSON.stringify(lighterEvents, null, 2)} emitted for transactionHash: ${transactionhash}`)
+    console.log(
+      `${lighterEvents.length} lighter-events emitted for transactionHash -> ${transactionhash}:\n\n ${JSON.stringify(
+        lighterEvents,
+        null,
+        2
+      )}`
+    )
   })
 
 // npx hardhat getFuncSignature --network arbgoerli
