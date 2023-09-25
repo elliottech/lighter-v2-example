@@ -25,9 +25,3 @@ task('getAllLighterEvents')
       `${lighterEvents.length} lighter-events emitted for transactionHash -> ${transactionhash}:\n\n ${eventsAsString}`
     )
   })
-
-// npx hardhat getFuncSignature --network arbgoerli
-task('getFuncSignature').setAction(async ({}, hre) => {
-  const lighterFuncSing = lighterFunctionSignatures[LighterAction.CREATE_LIMIT_ORDER]
-  console.log(`lighterFuncSing: ${JSON.stringify(lighterFuncSing, null, 2)}`)
-})
