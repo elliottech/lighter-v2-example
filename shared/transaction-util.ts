@@ -33,7 +33,10 @@ export const getTransaction = async (provider: Provider, transactionHash: string
   return txnDetails
 }
 
-export const getOrderBookId = async (transactionHash: string, hre: HardhatRuntimeEnvironment): Promise<BigNumber> => {
+export const parseOrderBookIdFromTransactionData = async (
+  transactionHash: string,
+  hre: HardhatRuntimeEnvironment
+): Promise<BigNumber> => {
   // Get transaction details
   const tx = await getTransaction(hre.ethers.provider, transactionHash)
 
