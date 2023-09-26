@@ -187,7 +187,7 @@ export type LighterEvent =
   | ClaimableBalanceDecreaseEvent
 
 export const CREATE_ORDER_EVENT_NAME = 'CreateOrderEvent'
-export const CANCEL_LIMIT_ORDER_EVENT_NAME = 'CancelOrderEvent'
+export const CANCEL_LIMIT_ORDER_EVENT_NAME = 'CancelLimitOrderEvent'
 export const SWAP_EVENT_NAME = 'SwapEvent'
 export const SWAP_EXACT_AMOUNT_EVENT_NAME = 'SwapExactAmountEvent'
 export const FLASH_LOAN_EVENT_NAME = 'FlashLoanEvent'

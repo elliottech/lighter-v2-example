@@ -1,6 +1,5 @@
 import * as RouterABI from '@elliottech/lighter-v2-periphery/artifacts/contracts/Router.sol/Router.json'
 import * as OrderBookABI from '@elliottech/lighter-v2-core/artifacts/contracts/OrderBook.sol/OrderBook.json'
-import * as IERC20MetadataABI from '../artifacts/@openzeppelin/contracts/token/ERC20/extensions/IERC20Metadata.sol/IERC20Metadata.json'
 import * as FactoryABI from '@elliottech/lighter-v2-core/artifacts/contracts/Factory.sol/Factory.json'
 import {HardhatRuntimeEnvironment} from 'hardhat/types'
 import {IOrderBook, IRouter, IFactory} from '../typechain-types'
@@ -30,6 +29,7 @@ export const getTokenContractAt = async (
   hre: HardhatRuntimeEnvironment
 ): Promise<IERC20Metadata> => {
   const [signer] = await hre.ethers.getSigners()
+  const IERC20MetadataABI = require('../artifacts/@openzeppelin/contracts/token/ERC20/extensions/IERC20Metadata.sol/IERC20Metadata.json')
   return (await hre.ethers.getContractAt(IERC20MetadataABI.abi, tokenAddress, signer)) as any as IERC20Metadata
 }
 

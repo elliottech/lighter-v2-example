@@ -1,13 +1,10 @@
-import {ethers} from 'ethers'
 import {ParseEventFunctions} from '../shared'
 import {
   ChainId,
-  LighterAction,
   LighterConfig,
   LighterContracts,
   LighterEventSignature,
   LighterEventType,
-  LighterFunctionSignature,
   OrderBookKey,
   OrderType,
   Token,

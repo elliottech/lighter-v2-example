@@ -1,9 +1,8 @@
 import '@nomiclabs/hardhat-ethers'
 import {Provider} from '@ethersproject/providers'
-import {getOrderBookAt, getOrderTypeFromValue, getTransactionReceipt} from '../shared'
+import {getOrderTypeFromValue, getTransactionReceipt} from '../shared'
 import {BigNumber, ethers} from 'ethers'
 import {
-  LighterEventType,
   CreateOrderEvent,
   CancelLimitOrderEvent,
   SwapEvent,
@@ -20,138 +19,55 @@ import {
   FLASH_LOAN_EVENT_NAME,
   SWAP_EVENT_NAME,
   SWAP_EXACT_AMOUNT_EVENT_NAME,
+  LighterEventSignature,
 } from '../config'
+import {IOrderBook__factory} from '../typechain-types'
+import {EventFragment} from '@ethersproject/abi'
 
-export const getAllLighterEvents = async (
-  orderBookAddress: string,
-  transactionHash: string,
-  hre: any
-): Promise<LighterEvent[]> => {
-  const events = []
-
-  const cancelLimitOrderEvents = await getLighterEventsByEventType(
-    orderBookAddress,
-    transactionHash,
-    LighterEventType.CANCEL_LIMIT_ORDER_EVENT,
-    hre
-  )
-  if (cancelLimitOrderEvents) {
-    events.push(...cancelLimitOrderEvents)
-  }
-
-  const createOrderEvents = await getLighterEventsByEventType(
-    orderBookAddress,
-    transactionHash,
-    LighterEventType.CREATE_ORDER_EVENT,
-    hre
-  )
-  if (createOrderEvents) {
-    events.push(...createOrderEvents)
-  }
-
-  const flashLoanEvents = await getLighterEventsByEventType(
-    orderBookAddress,
-    transactionHash,
-    LighterEventType.FLASH_LOAN_EVENT,
-    hre
-  )
-  if (flashLoanEvents) {
-    events.push(...flashLoanEvents)
-  }
-
-  const swapEvents = await getLighterEventsByEventType(
-    orderBookAddress,
-    transactionHash,
-    LighterEventType.SWAP_EVENT,
-    hre
-  )
-  if (swapEvents) {
-    events.push(...swapEvents)
-  }
-  const swapExactAmountEvents = await getLighterEventsByEventType(
-    orderBookAddress,
-    transactionHash,
-    LighterEventType.SWAP_EXACT_AMOUNT_EVENT,
-    hre
-  )
-  if (swapExactAmountEvents) {
-    events.push(...swapExactAmountEvents)
-  }
-
-  return events
-}
-
-export const getLighterEventsByEventType = async (
-  orderBookAddress: string,
-  transactionHash: string,
-  lighterEventType: LighterEventType,
-  hre: any
-): Promise<
-  | CreateOrderEvent[]
-  | CancelLimitOrderEvent[]
-  | SwapEvent[]
-  | SwapExactAmountEvent[]
-  | FlashLoanEvent[]
-  | ClaimableBalanceIncreaseEvent[]
-  | ClaimableBalanceDecreaseEvent[]
-> => {
-  if (!orderBookAddress) {
-    throw new Error(`Invalid orderBookAddress`)
-  }
-
+export const getAllLighterEvents = async (transactionHash: string, hre: any): Promise<LighterEvent[]> => {
   if (!transactionHash) {
     throw new Error(`Invalid transactionHash`)
   }
 
   const provider: Provider = hre.ethers.provider
-
   if (!provider || !provider._isProvider) {
     throw new Error(`Invalid provider`)
   }
 
-  const orderbookContract = await getOrderBookAt(orderBookAddress, hre)
-
-  if (!orderbookContract) {
-    throw new Error(`Failed to load orderBookContract Instance for: ${orderBookAddress}`)
-  }
-
-  let eventSignatureData = lighterEventSignatures[lighterEventType]
-
-  let eventInterfaceBlock =
-    orderbookContract.interface.events[
-      eventSignatureData.eventSignature as keyof typeof orderbookContract.interface.events
-    ]
-
-  // Check if the contract ABI includes the event interface
-  if (!eventInterfaceBlock) {
-    throw new Error(`Event ${eventSignatureData.eventSignature} not found in Orderbook-contract ABI.`)
-  }
-
+  // fetch receipt & all logs
   const txReceipt = await getTransactionReceipt(provider, transactionHash)
-
   if (!txReceipt) {
     throw new Error(`Invalid transactionReceipt for hash: ${transactionHash}`)
   }
-
-  if (!txReceipt.logs || txReceipt.logs.length == 0) {
+  if (!txReceipt.logs) {
     console.log(`transactionReceipt has invalid or empty logs`)
   }
 
-  // Define the event interface with the full event structure
-  let eventInterface = new ethers.utils.Interface([eventInterfaceBlock])
-
-  // Filter the logs for the event
-  const decodedEventLogs = txReceipt.logs
-    .filter((log) => log.topics[0] === eventInterface.getEventTopic(eventSignatureData.eventName))
-    .map((log) => eventInterface.parseLog(log))
-
-  if (!decodedEventLogs || decodedEventLogs.length == 0 || !decodedEventLogs[0]) {
-    console.warn(`No ${eventSignatureData.eventName}s for transactionHash: ${transactionHash}`)
+  let events: LighterEventSignature[] = []
+  for (const event in lighterEventSignatures) {
+    events.push(lighterEventSignatures[event])
   }
 
-  return decodedEventLogs && decodedEventLogs.length > 0
-    ? decodedEventLogs.map((eventData) => eventSignatureData.parseEventFunction(eventData))
-    : []
+  let fragments: EventFragment[] = []
+  const obInterface = IOrderBook__factory.createInterface()
+  for (const event of events) {
+    fragments.push(obInterface.events[event.eventSignature as keyof typeof obInterface.events])
+  }
+
+  // Define the event interface with the full event structure
+  let eventInterface = new ethers.utils.Interface(fragments)
+
+  // Filter the logs for the event
+  return txReceipt.logs
+    .map((log) => {
+      for (const event of events) {
+        if (log.topics[0] == eventInterface.getEventTopic(event.eventName)) {
+          return event.parseEventFunction(eventInterface.parseLog(log))
+        }
+      }
+      return null
+    })
+    .filter((log) => log != null)
 }
 
 export const parseCreateOrderEventData = (eventData: ethers.utils.LogDescription): CreateOrderEvent => {
