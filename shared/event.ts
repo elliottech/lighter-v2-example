@@ -21,7 +21,6 @@ import {
   SWAP_EXACT_AMOUNT_EVENT_NAME,
   LighterEventSignature,
 } from '../config'
-import {IOrderBook__factory} from '../typechain-types'
 import {EventFragment} from '@ethersproject/abi'
 
 export const getAllLighterEvents = async (transactionHash: string, hre: any): Promise<LighterEvent[]> => {
@@ -49,6 +48,8 @@ export const getAllLighterEvents = async (transactionHash: string, hre: any): Pr
   }
 
   let fragments: EventFragment[] = []
+  // avoid typescript error triggered the first time the project is compiled by requiring here instead of having a global import
+  const IOrderBook__factory = require('../typechain-types').IOrderBook__factory
   const obInterface = IOrderBook__factory.createInterface()
   for (const event of events) {
     fragments.push(obInterface.events[event.eventSignature as keyof typeof obInterface.events])

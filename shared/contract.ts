@@ -2,8 +2,7 @@ import * as RouterABI from '@elliottech/lighter-v2-periphery/artifacts/contracts
 import * as OrderBookABI from '@elliottech/lighter-v2-core/artifacts/contracts/OrderBook.sol/OrderBook.json'
 import * as FactoryABI from '@elliottech/lighter-v2-core/artifacts/contracts/Factory.sol/Factory.json'
 import {HardhatRuntimeEnvironment} from 'hardhat/types'
-import {IOrderBook, IRouter, IFactory} from '../typechain-types'
-import {IERC20Metadata} from '../typechain-types/@openzeppelin/contracts/token/ERC20/extensions/IERC20Metadata'
+import {IERC20Metadata, IOrderBook, IRouter, IFactory} from '../typechain-types'
 import {OrderBookConfig, OrderType} from '../config'
 import {BigNumber} from 'ethers'
 
@@ -14,9 +13,9 @@ export const getOrderTypeFromValue = (value: number): OrderType => {
   return enumValue as OrderType
 }
 
-export const getRouterAt = async (address: string, hre: HardhatRuntimeEnvironment): Promise<IRouter> => {
+export const getRouterAt = async (routerAddress: string, hre: HardhatRuntimeEnvironment): Promise<IRouter> => {
   const [signer] = await hre.ethers.getSigners()
-  return (await hre.ethers.getContractAt(RouterABI.abi, address, signer)) as any as IRouter
+  return (await hre.ethers.getContractAt(RouterABI.abi, routerAddress, signer)) as any as IRouter
 }
 
 export const getOrderBookAt = async (orderBookAddress: string, hre: HardhatRuntimeEnvironment): Promise<IOrderBook> => {
@@ -24,10 +23,7 @@ export const getOrderBookAt = async (orderBookAddress: string, hre: HardhatRunti
   return (await hre.ethers.getContractAt(OrderBookABI.abi, orderBookAddress, signer)) as any as IOrderBook
 }
 
-export const getTokenContractAt = async (
-  tokenAddress: string,
-  hre: HardhatRuntimeEnvironment
-): Promise<IERC20Metadata> => {
+export const getTokenAt = async (tokenAddress: string, hre: HardhatRuntimeEnvironment): Promise<IERC20Metadata> => {
   const [signer] = await hre.ethers.getSigners()
   const IERC20MetadataABI = require('../artifacts/@openzeppelin/contracts/token/ERC20/extensions/IERC20Metadata.sol/IERC20Metadata.json')
   return (await hre.ethers.getContractAt(IERC20MetadataABI.abi, tokenAddress, signer)) as any as IERC20Metadata
@@ -37,30 +33,15 @@ export const getFactoryAt = async (factoryAddress: string, hre: HardhatRuntimeEn
   return (await hre.ethers.getContractAt(FactoryABI.abi, factoryAddress)) as any as IFactory
 }
 
-export const getOrderBookConfigFromOrderBookId = async (
-  orderBookId: BigNumber,
-  factoryAddress: string,
-  hre: HardhatRuntimeEnvironment
-): Promise<OrderBookConfig> => {
-  const factory: IFactory = await getFactoryAt(factoryAddress, hre)
-  const orderBookAddress = await factory.getOrderBookFromId(orderBookId)
-  const orderBookContract = await getOrderBookAt(orderBookAddress, hre)
-  const token0 = await orderBookContract.token0()
-  const token0Contract = await getTokenContractAt(token0, hre)
-  const token1 = await orderBookContract.token1()
-  const token1Contract = await getTokenContractAt(token1, hre)
-  return await getOrderBookConfig(orderBookContract, token0Contract, token1Contract)
-}
-
 export const getOrderBookConfigFromAddress = async (
   orderBookAddress: string,
   hre: HardhatRuntimeEnvironment
 ): Promise<OrderBookConfig> => {
   const orderBookContract = await getOrderBookAt(orderBookAddress, hre)
   const token0 = await orderBookContract.token0()
-  const token0Contract = await getTokenContractAt(token0, hre)
+  const token0Contract = await getTokenAt(token0, hre)
   const token1 = await orderBookContract.token1()
-  const token1Contract = await getTokenContractAt(token1, hre)
+  const token1Contract = await getTokenAt(token1, hre)
   return await getOrderBookConfig(orderBookContract, token0Contract, token1Contract)
 }
 
@@ -106,13 +87,4 @@ export const getOrderBookConfig = async (
     token1Name,
     token1Precision,
   }
-}
-
-export const getTokenDecimals = async (tokenAddress: string, hre: HardhatRuntimeEnvironment): Promise<number> => {
-  const tokenContract = await getTokenContractAt(tokenAddress, hre)
-  return await getTokenDecimalFromContract(tokenContract)
-}
-
-export const getTokenDecimalFromContract = async (tokenContract: IERC20Metadata): Promise<number> => {
-  return await tokenContract.decimals()
 }

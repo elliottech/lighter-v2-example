@@ -1,6 +1,12 @@
 import {task} from 'hardhat/config'
 import {boolean, string} from 'hardhat/internal/core/params/argumentTypes'
-import {OrderBookKey, getLighterConfig, SwapExactAmountEvent, OrderBookConfig} from '../config'
+import {
+  OrderBookKey,
+  getLighterConfig,
+  SwapExactAmountEvent,
+  OrderBookConfig,
+  SWAP_EXACT_AMOUNT_EVENT_NAME,
+} from '../config'
 import {isSuccessful, getRouterAt, parseAmount, getOrderBookConfigFromAddress, getAllLighterEvents} from '../shared'
 import {formatUnits} from 'ethers/lib/utils'
 import {HardhatRuntimeEnvironment} from 'hardhat/types'
@@ -22,7 +28,7 @@ async function printSwapExactExecution(
   const allEvents = await getAllLighterEvents(tx.hash, hre)
   let swapExactEvent: SwapExactAmountEvent | null = null
   for (const event of allEvents) {
-    if (event.eventName == 'SwapExactAmountEvent') {
+    if (event.eventName == SWAP_EXACT_AMOUNT_EVENT_NAME) {
       swapExactEvent = event as SwapExactAmountEvent
     }
   }
