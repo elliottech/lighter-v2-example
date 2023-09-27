@@ -1,15 +1,8 @@
 import {ethers} from 'hardhat'
-import {IPool} from '@aave/core-v3/dist/types/types'
-import {MarginWallet} from '../typechain-types'
 import {expect} from 'chai'
-import {deployTokens, ParseUSDC, getAAVEPoolAt, reset} from './shared'
+import {deployTokens, ParseUSDC, getAAVEPoolAt, reset, deployMarginWallet} from './shared'
 import {fundAccount} from './token'
 import {getLighterConfig} from '../config'
-
-async function deployMarginWallet(pool: IPool) {
-  const factory = await ethers.getContractFactory('MarginWallet')
-  return (await factory.deploy(pool.address)) as MarginWallet
-}
 
 describe('Margin wallet', async () => {
   beforeEach(async function () {
