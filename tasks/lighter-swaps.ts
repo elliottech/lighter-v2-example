@@ -80,6 +80,10 @@ task('swapExactInput')
       recipient = signer.address
     }
 
+    if (exactInputAmount.eq(0)) {
+      throw 'exact input is 0'
+    }
+
     // TODO: consider using fallback compression here instead of calling swapExact method directly
     const tx = await routerContract.swapExactInputSingle(
       orderBookConfig.orderBookId,
@@ -117,6 +121,10 @@ task('swapExactOutput')
     )
     if (recipient == '') {
       recipient = signer.address
+    }
+
+    if (exactOutputAmount.eq(0)) {
+      throw 'exact output is 0'
     }
 
     // TODO: consider using fallback compression here instead of calling swapExact method directly
