@@ -30,25 +30,16 @@ export const lighterConfigs: {
   [ChainId: string]: LighterConfig
 } = {
   [ChainId.ARBITRUM_GOERLI]: {
-    Router: '0xBaDEd09099fFfBfFDc07896A632dBC7e1BE41c66',
-    Factory: '0xB15457ea816677564145AF39D92A9aE68fde1E96',
+    Router: '0x69533aA255E728995044baD3F713EA0F3E786c98',
+    Factory: '0xF38d66921bD3d26A92886dbB1ee49bE669E3FCfE',
     OrderBooks: {
-      [OrderBookKey.WETH_USDC]: '0x5Fd98c554B29E0DE9DcF09eEd3339367C62b2606',
-      [OrderBookKey.WBTC_USDC]: '0xa791f2eC05b6A6771397B4AE4fAb42E84bb22008',
+      [OrderBookKey.WETH_USDC]: '0xc5aac3b83228a5c69efb4c60c00a45b576230a50',
+      [OrderBookKey.WBTC_USDC]: '0xcA31078C52f770BA2EA95BFbE327a25cFc793230',
     },
     Tokens: {
       [Token.WETH]: '0x4d541f0b8039643783492f9865c7f7de4f54eb5f',
       [Token.WBTC]: '0xf133eb356537f0b3b4fdfb98233b45ef8138aa56',
       [Token.USDC]: '0xcc4a8fa63ce5c6a7f4a7a3d2ebcb738ddcd31209',
-
-      // this are not real AAVE tokens, but they are here so the tests are passing
-      // when deploying tokens using testnet forking
-      [Token.aArbWETH]: '0x4d541f0b8039643783492f9865c7f7de4f54eb5f',
-      [Token.aArbWBTC]: '0xf133eb356537f0b3b4fdfb98233b45ef8138aa56',
-      [Token.aArbUSDC]: '0xcc4a8fa63ce5c6a7f4a7a3d2ebcb738ddcd31209',
-      [Token.vArbWETH]: '0x4d541f0b8039643783492f9865c7f7de4f54eb5f',
-      [Token.vArbWBTC]: '0xf133eb356537f0b3b4fdfb98233b45ef8138aa56',
-      [Token.vArbUSDC]: '0xcc4a8fa63ce5c6a7f4a7a3d2ebcb738ddcd31209',
     },
     Vault: {
       [Token.WETH]: '0x86A9E67c3aE6B87Cc23652B2d72a21CB80dec146',
