@@ -52,7 +52,7 @@ describe('Swap wallet', async () => {
     expect(order.amount0Base.mul(sizeTick)).to.equal(amount)
     expect(order.priceBase.mul(priceTick)).to.equal(price)
   })
-  it('cancels orders', async () => {
+  it('cancels order', async () => {
     const {mmWallet: wallet, orderBook} = await deployContracts()
     const amount = ParseWETH(1)
     const price = ParseUSDC(2000)
@@ -62,6 +62,34 @@ describe('Swap wallet', async () => {
 
     await wallet.cancelLimitOrder(orderBook.address, 37)
     await expectOrderBook(orderBook, [35, 0], [36, 29, 31, 30, 0])
+  })
+  it('cancels all orders', async () => {
+    const {mmWallet: wallet, orderBook} = await deployContracts()
+    const amount = ParseWETH(0.1)
+    const price = ParseUSDC(2000)
+
+    await wallet.createLimitOrder(orderBook.address, amount, price, false, 0)
+    await wallet.createLimitOrder(orderBook.address, amount, price, false, 0)
+    await wallet.createLimitOrder(orderBook.address, amount, price, false, 0)
+    await wallet.createLimitOrder(orderBook.address, amount, price, false, 0)
+    await expectOrderBook(orderBook, [35, 0], [37, 38, 39, 40, 36, 29, 31, 30, 0])
+
+    await wallet.cancelAllLimitOrders(orderBook.address)
+    await expectOrderBook(orderBook, [35, 0], [36, 29, 31, 30, 0])
+  })
+  it('gets all orders', async () => {
+    const {mmWallet: wallet, orderBook} = await deployContracts()
+    const orders = await wallet.getLimitOrders(orderBook.address)
+    expect(orders.length).to.equal(5)
+
+    expect(orders[0].isAsk).to.equal(true)
+    expect(orders[1].isAsk).to.equal(false)
+
+    expect(orders[0].id).to.equal(35)
+    expect(orders[1].id).to.equal(36)
+    expect(orders[2].id).to.equal(29)
+    expect(orders[3].id).to.equal(31)
+    expect(orders[4].id).to.equal(30)
   })
 
   it('can withdraw tokens', async () => {

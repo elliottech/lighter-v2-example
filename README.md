@@ -29,3 +29,8 @@ Trading on Lighter leverages the credit provided by the AAVE protocol.
 If a swap is initiated with insufficient deposited tokens, a loan will be taken to cover the remaining costs.
 This implementation does not use Flash Loans, thereby avoiding extra costs.
 Due to the nature of margin accounts, liquidation is a possibility.
+
+## [View Wallet](./contracts/ViewWallet.sol)
+A wallet that extends the Lighter protocol by providing more view methods.
+It offers methods like `getLimitOrders` and `getLimitOrdersByOwner`. 
+Inherited by the Market Making Wallet, enabling an atomic `cancelAllLimitOrders` method.

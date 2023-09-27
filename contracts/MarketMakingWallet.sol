@@ -5,6 +5,7 @@ import {IERC20} from "@openzeppelin/contracts/token/ERC20/IERC20.sol";
 import {IOrderBook} from "@elliottech/lighter-v2-core/contracts/interfaces/IOrderBook.sol";
 import {IFactory} from "@elliottech/lighter-v2-core/contracts/interfaces/IFactory.sol";
 import {ILighterV2TransferCallback, IERC20Minimal} from "@elliottech/lighter-v2-core/contracts/interfaces/ILighterV2TransferCallback.sol";
+import {ViewWallet} from "./ViewWallet.sol";
 
 /// @title MarketMakingWallet
 /// @notice A wallet that interacts with the Lighter protocol by placing optimized limit orders.
@@ -13,7 +14,7 @@ import {ILighterV2TransferCallback, IERC20Minimal} from "@elliottech/lighter-v2-
 /// an order is created or canceled, thereby reducing gas costs.
 ///
 /// The MarketMakingWallet serves as a starting point for users who wish to place resting orders on Lighter (i.e., to market make).
-contract MarketMakingWallet is ILighterV2TransferCallback {
+contract MarketMakingWallet is ILighterV2TransferCallback, ViewWallet  {
     /// @notice address of the owner of wallet
     address public immutable owner;
 
@@ -103,6 +104,16 @@ contract MarketMakingWallet is ILighterV2TransferCallback {
     /// @return isCanceled Whether the order was canceled.
     function cancelLimitOrder(IOrderBook orderBook, uint32 orderId) external onlyOwner returns (bool isCanceled) {
         return orderBook.cancelLimitOrder(orderId, address(this));
+    }
+
+    /// @dev Cancels performance limit orders in the order book.
+    /// @notice Can only be called by owner.
+    /// @param orderBook The address of the order book
+    function cancelAllLimitOrders(IOrderBook orderBook) public {
+        Order[] memory orders = getLimitOrdersByOwner(orderBook, address(this));
+        for (uint256 index = 0; index < orders.length; index += 1) {
+            orderBook.cancelLimitOrder(orders[index].id, address(this));
+        }
     }
 
     /// @notice Deposits token amount into the orderBook.
