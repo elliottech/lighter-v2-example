@@ -1,18 +1,20 @@
 import {BigNumber, BigNumberish, utils} from 'ethers'
+import {formatUnits} from 'ethers/lib/utils'
+import {Order, OrderBookConfig} from '../config'
 
-export const parseAmount = (amount: BigNumber, tokenPrecision: number): BigNumber => {
-  return ParseTokenAmount(amount, tokenPrecision)
+export const parseAmount = (amount: BigNumberish, tokenPrecision: number): BigNumber => {
+  return parseBigNumberish(amount, tokenPrecision)
 }
 
-export const parseBaseAmount = (amount: BigNumber, tokenPrecision: number, sizeTick: BigNumber): BigNumber => {
-  return ParseTokenAmount(amount, tokenPrecision).div(sizeTick)
+export const parseToAmountBase = (amount: BigNumberish, ob: OrderBookConfig): BigNumber => {
+  return parseBigNumberish(amount, ob.token0Precision).div(ob.sizeTick)
 }
 
-export const parseBasePrice = (price: BigNumber, tokenPrecision: number, priceTick: BigNumber): BigNumber => {
-  return ParseTokenAmount(price, tokenPrecision).div(priceTick)
+export const parseToPriceBase = (price: BigNumberish, ob: OrderBookConfig): BigNumber => {
+  return parseBigNumberish(price, ob.token1Precision).div(ob.priceTick)
 }
 
-export const ParseTokenAmount = (value: BigNumberish, precision: number): BigNumber => {
+const parseBigNumberish = (value: BigNumberish, precision: number): BigNumber => {
   if (typeof value == 'string') {
     return utils.parseUnits(value, precision)
   }

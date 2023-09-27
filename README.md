@@ -73,3 +73,34 @@ npx hardhat --network arbgoerli swapExactOutput --orderbookname WETH-USDC --isas
 # swapExact Transaction: 0x900d43096c82f6d0e50f9b7e1b6291403bc83d2d93f0391538481839fc407cec successful
 # swapped 0.01334 WETH for 20.01 USDC
 ```
+
+
+### Create Limit Order
+Creating limit orders locks the tokens in the order book until the order is canceled or executed by someone else.
+When creating a limit order, it may execute immediately at the best market price if the price for an ask order is too low, as illustrated in Example 1.
+
+In Example 2, an order is depicted that enters the order book as a market order but does not execute with any other order.
+
+Example 3 demonstrates an order that partially executes against a resting order, with the remaining portion placed in the order book.
+
+```shell
+# example 1, order executes at market price
+$ npx hardhat --network arbgoerli createOrder --orderbookname WETH-USDC --isask true --amount 0.1 --price 1200.0
+# createOrder Transaction: 0x3a927a8a20de037a1c4c27263f57c3768c25317c8673e9f77c1a259b4b3d3ed0 successful
+# orderId:67 executed completely at best market price
+# swaps triggered
+# 0.1 WETH for 150.0 USDC (price of 1500.0)
+
+# example 2, order enters the book without executing
+$ npx hardhat --network arbgoerli createOrder --orderbookname WETH-USDC --isask false --amount 0.25 --price 1900.0
+# createOrder Transaction: 0x4cedd901ffab93e0b8212bd30d2232ff5e966fde449e55815fa3db798d6e7b77 successful
+# orderId:76 resting amount 0.25 @ 1900.0
+# no swaps triggered
+
+# example 3, order executes partially at best market price
+$ npx hardhat --network arbgoerli createOrder --orderbookname WETH-USDC --isask true --amount 0.4 --price 1900.0
+# createOrder Transaction: 0x71c5f826c3ef6bf750cf8a428a85d764fe078b3b172764c320ec0ab500922ff1 successful
+# orderId:77 resting amount 0.15 @ 1900.0
+# swaps triggered
+# 0.25 WETH for 475.0 USDC (price of 1900.0)
+```

@@ -1,127 +1,116 @@
 import {task} from 'hardhat/config'
 import {boolean, int} from 'hardhat/internal/core/params/argumentTypes'
-import {BigNumber} from 'ethers'
-import {OrderBookKey, getLighterConfig} from '../config'
+import {BigNumber, ContractTransaction} from 'ethers'
+import {OrderBookKey, getLighterConfig, OrderBookConfig, CreateOrderEvent, SwapEvent} from '../config'
 import {
   isSuccessful,
-  getRouterAt,
-  parseBaseAmount,
-  parseBasePrice,
+  parseToAmountBase,
+  parseToPriceBase,
   getOrderBookConfigFromAddress,
   getAllLighterEvents,
   getOrderFallbackData,
 } from '../shared'
-import {OrderType, getOrderTypeString} from '../config'
+import {OrderType} from '../config'
 import {HardhatRuntimeEnvironment} from 'hardhat/types'
+import {formatUnits} from 'ethers/lib/utils'
 
-export const executeOrderCreation = async (
-  orderbookname: string,
-  orderType: OrderType,
-  amount: BigNumber,
-  price: BigNumber,
-  isask: boolean,
+async function printCreateOrderExecution(
+  tx: ContractTransaction,
+  orderBookConfig: OrderBookConfig,
   hre: HardhatRuntimeEnvironment
-) => {
-  const lighterConfig = await getLighterConfig()
-  const routerContract = await getRouterAt(lighterConfig.Router, hre)
-  const orderBookAddress = lighterConfig.OrderBooks[orderbookname as OrderBookKey] as string
-  const orderBookConfig = await getOrderBookConfigFromAddress(orderBookAddress, hre)
-  const amountBase = parseBaseAmount(amount, orderBookConfig.token0Precision, orderBookConfig.sizeTick)
-  if (!amountBase || amountBase.eq(BigNumber.from(0))) {
-    throw new Error(`Invalid amountBase ${amountBase}`)
-  }
-  const priceBase = parseBasePrice(price, orderBookConfig.token1Precision, orderBookConfig.priceTick)
-  if (!priceBase || priceBase.eq(BigNumber.from(0))) {
-    throw new Error(`Invalid PriceBase ${priceBase}`)
-  }
-
-  let tx
-
-  switch (orderType) {
-    case OrderType.FoKOrder: {
-      tx = await routerContract.createFoKOrder(orderBookConfig.orderBookId, amountBase, priceBase, isask)
-      break
-    }
-
-    case OrderType.IoCOrder: {
-      tx = await routerContract.createIoCOrder(orderBookConfig.orderBookId, amountBase, priceBase, isask)
-      break
-    }
-
-    case OrderType.LimitOrder: {
-      tx = await routerContract.createLimitOrder(orderBookConfig.orderBookId, amountBase, priceBase, isask, 0)
-      break
-    }
-
-    default:
-      throw new Error(`Failed to execute createOrder Request - Invalid/Unsupported OrderType`)
-  }
-
-  const orderTypeDescription = getOrderTypeString(orderType)
-
+) {
   await tx.wait()
-  const successIndicator = await isSuccessful(hre.ethers.provider, tx.hash)
+  const successful = await isSuccessful(hre.ethers.provider, tx.hash)
 
-  if (successIndicator) {
-    const lighterEvents = await getAllLighterEvents(orderBookAddress, tx.hash, hre)
-    console.log(
-      `Create-${orderTypeDescription} Transaction: ${tx.hash} is successful and OrderEvent: ${JSON.stringify(
-        lighterEvents,
-        null,
-        2
-      )} emitted`
-    )
+  if (!successful) {
+    console.log(`createOrder Transaction: ${tx.hash} failed`)
+    return
+  }
+
+  const allEvents = await getAllLighterEvents(tx.hash, hre)
+  let createOrderEvent: CreateOrderEvent | null = null
+  let swapEvents: SwapEvent[] = []
+  for (const event of allEvents) {
+    if (event.eventName == 'CreateOrderEvent') {
+      createOrderEvent = event as CreateOrderEvent
+    }
+    if (event.eventName == 'SwapEvent') {
+      swapEvents.push(event as SwapEvent)
+    }
+  }
+
+  if (createOrderEvent == null) {
+    console.warn(`no swap event was triggered but transaction was successful`)
+    return
+  }
+
+  let remainingAmount0 = createOrderEvent.amount0Base.mul(orderBookConfig.sizeTick)
+  let price = createOrderEvent.priceBase.mul(orderBookConfig.priceTick)
+  for (const swap of swapEvents) {
+    remainingAmount0 = remainingAmount0.sub(swap.amount0)
+  }
+
+  console.log(
+    `createOrder Transaction: ${tx.hash} successful\n` +
+      `orderId:${createOrderEvent.id} ` +
+      (remainingAmount0.eq(0)
+        ? `executed completely at best market price`
+        : `resting amount ${formatUnits(remainingAmount0, orderBookConfig.token0Precision)} ` +
+          `@ ${formatUnits(price, orderBookConfig.token1Precision)}`)
+  )
+
+  if (swapEvents.length == 0) {
+    console.log('no swaps triggered')
   } else {
-    console.log(`Create-${orderTypeDescription} Transaction: ${tx.hash} failed`)
+    console.log('swaps triggered')
+    for (const swap of swapEvents) {
+      const price = swap.amount1.mul(BigNumber.from(10).pow(orderBookConfig.token0Precision)).div(swap.amount0)
+
+      if (createOrderEvent.isAsk) {
+        console.log(
+          `${formatUnits(swap.amount0, orderBookConfig.token0Precision)} ${orderBookConfig.token0Symbol} for ` +
+            `${formatUnits(swap.amount1, orderBookConfig.token1Precision)} ${orderBookConfig.token1Symbol} ` +
+            `(price of ${formatUnits(price, orderBookConfig.token1Precision)})`
+        )
+      } else {
+        console.log(
+          `${formatUnits(swap.amount1, orderBookConfig.token1Precision)} ${orderBookConfig.token1Symbol} for ` +
+            `${formatUnits(swap.amount0, orderBookConfig.token0Precision)} ${orderBookConfig.token0Symbol} ` +
+            `(price of ${formatUnits(price, orderBookConfig.token1Precision)})`
+        )
+      }
+    }
   }
 }
 
-export const executeFallbackOrderCreation = async (
-  orderbookname: string,
-  orderType: OrderType,
-  amount: BigNumber,
-  price: BigNumber,
-  isask: boolean,
-  hre: HardhatRuntimeEnvironment
-) => {
-  const lighterConfig = await getLighterConfig()
-  const orderBookAddress = lighterConfig.OrderBooks[orderbookname as OrderBookKey] as string
-  const orderBookConfig = await getOrderBookConfigFromAddress(orderBookAddress, hre)
-  const amountBase = parseBaseAmount(amount, orderBookConfig.token0Precision, orderBookConfig.sizeTick)
-  if (!amountBase || amountBase.eq(BigNumber.from(0))) {
-    throw new Error(`Invalid amountBase ${amountBase}`)
-  }
-  const priceBase = parseBasePrice(price, orderBookConfig.token1Precision, orderBookConfig.priceTick)
-  if (!priceBase || priceBase.eq(BigNumber.from(0))) {
-    throw new Error(`Invalid PriceBase ${priceBase}`)
-  }
-
-  const txData = getOrderFallbackData(orderBookConfig.orderBookId, orderType, amountBase, priceBase, isask)
-
-  const signers = await hre.ethers.getSigners()
-
-  await signers[0].sendTransaction({
-    to: lighterConfig.Router,
-    data: txData,
-  })
-}
-
-// create limit-order
-// npx hardhat createOrder --orderbookname WETH-USDC --ordertype 0 --amount 1 --price 2000 --isask true --network arbgoerli
-// npx hardhat createOrder --orderbookname WETH-USDC --amount 0.2 --price 1975.55 --isask true --network arbgoerli
-
-//create fillOrKill-order
-// npx hardhat createOrder --orderbookname WETH-USDC --ordertype 2 --amount 0.2 --price 1975.55 --isask false --network arbgoerli
-
-//create ioc-order
-// npx hardhat createOrder --orderbookname WETH-USDC --ordertype 0 --amount 0.2 --price 1975.55 --isask true --network arbgoerli
 task('createOrder')
   .addParam('orderbookname')
-  .addParam('ordertype', 'orderType can take values: 0 for fokOrder, 1 for iocOrder and 2 for limitOrder', 2, int, true)
+  .addParam('ordertype', 'orderType can take values: 0 for LimitOrder, 2 for FoKOrder and 3 for IoCOrder', 0, int, true)
   .addParam('amount')
   .addParam('price')
   .addParam('isask', 'whatever or not order is ask', null, boolean)
-  .setDescription('create FillOrKill Order via Router')
-  .setAction(async ({orderbookname, ordertype, amount, price, isask}, hre) => {
-    await executeFallbackOrderCreation(orderbookname, ordertype as OrderType, amount, price, isask, hre)
+  .setDescription('create Limit Order via Router')
+  .setAction(async ({orderbookname, ordertype, amount: amountStr, price: priceStr, isask}, hre) => {
+    const lighterConfig = await getLighterConfig()
+    const orderBookAddress = lighterConfig.OrderBooks[orderbookname as OrderBookKey]
+    const orderBookConfig = await getOrderBookConfigFromAddress(orderBookAddress, hre)
+
+    const amountBase = parseToAmountBase(amountStr, orderBookConfig)
+    const priceBase = parseToPriceBase(priceStr, orderBookConfig)
+
+    const txData = getOrderFallbackData(
+      orderBookConfig.orderBookId,
+      ordertype as OrderType,
+      amountBase,
+      priceBase,
+      isask
+    )
+
+    const [signer] = await hre.ethers.getSigners()
+    const tx = await signer.sendTransaction({
+      to: lighterConfig.Router,
+      data: txData,
+    })
+
+    await printCreateOrderExecution(tx, orderBookConfig, hre)
   })

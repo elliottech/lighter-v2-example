@@ -16,8 +16,9 @@ export function getOrderFallbackData(
 
   switch (orderType) {
     case OrderType.LimitOrder:
-    case OrderType.PerformaceLimitOrder:
+    case OrderType.PerformanceLimitOrder:
       functionSelector = 1
+      break
 
     case OrderType.FoKOrder: {
       functionSelector = isAsk ? 5 : 4
@@ -32,11 +33,18 @@ export function getOrderFallbackData(
 
   data += NumberToCallData(functionSelector, 1)
   data += NumberToCallData(orderBookId, 1)
+  if (orderType == OrderType.LimitOrder) {
+    console.log(isAsk)
+    data += new SizePaddedNumber(isAsk ? BigNumber.from(1) : BigNumber.from(0)).getHexString()
+    data += new SizePaddedNumber(amount0Base).getHexString()
+    data += new SizePaddedNumber(priceBase).getHexString()
 
-  data += new SizePaddedNumber(isAsk ? BigNumber.from(1) : BigNumber.from(0)).getHexString()
-  data += new SizePaddedNumber(amount0Base).getHexString()
-  data += new SizePaddedNumber(priceBase).getHexString()
-  data += new SizePaddedNumber(0).getHexString()
+    // hintID is here, pass instead
+    data += new SizePaddedNumber(0).getHexString()
+  } else {
+    data += new SizePaddedNumber(amount0Base).getHexString()
+    data += new SizePaddedNumber(priceBase).getHexString()
+  }
 
   return data
 }

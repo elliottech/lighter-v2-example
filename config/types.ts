@@ -2,7 +2,7 @@ import {BigNumber} from 'ethers'
 
 export enum OrderType {
   LimitOrder,
-  PerformaceLimitOrder,
+  PerformanceLimitOrder,
   FoKOrder,
   IoCOrder,
 }
@@ -179,8 +179,8 @@ export interface LighterEventSignature {
 
 export type LighterEvent =
   | CreateOrderEvent
-  | SwapEvent
   | CancelLimitOrderEvent
+  | SwapEvent
   | SwapExactAmountEvent
   | FlashLoanEvent
   | ClaimableBalanceIncreaseEvent

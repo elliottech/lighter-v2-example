@@ -81,7 +81,7 @@ export const parseCreateOrderEventData = (eventData: ethers.utils.LogDescription
     id: BigNumber.from(eventData.args[1].toString()),
     amount0Base: BigNumber.from(eventData.args[2].toString()),
     priceBase: BigNumber.from(eventData.args[3].toString()),
-    isAsk: eventData.args[4].toLowerCase() === 'true',
+    isAsk: eventData.args[4].toString().toLowerCase() === 'true',
     orderType: getOrderTypeFromValue(parseInt(eventData.args[5])),
   }
 }

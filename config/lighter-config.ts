@@ -19,7 +19,7 @@ export const getOrderTypeString = (value: OrderType): string => {
       return 'FoKOrder'
     case OrderType.IoCOrder:
       return 'IoCOrder'
-    case OrderType.PerformaceLimitOrder:
+    case OrderType.PerformanceLimitOrder:
       return 'PerformaceLimitOrder'
     default:
       throw new Error('Invalid enum value')
