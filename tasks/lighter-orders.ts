@@ -18,7 +18,7 @@ import {
   parseToPriceBase,
   getOrderBookConfigFromAddress,
   getAllLighterEvents,
-  getOrderFallbackData,
+  getCreateLimitOrderFallbackData,
   getCancelLimitOrderFallbackData,
 } from '../shared'
 import {OrderType} from '../config'
@@ -109,7 +109,7 @@ task('createOrder')
     const amountBase = parseToAmountBase(amountStr, orderBookConfig)
     const priceBase = parseToPriceBase(priceStr, orderBookConfig)
 
-    const txData = getOrderFallbackData(
+    const txData = getCreateLimitOrderFallbackData(
       orderBookConfig.orderBookId,
       ordertype as OrderType,
       amountBase,

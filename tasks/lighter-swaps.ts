@@ -80,6 +80,7 @@ task('swapExactInput')
       recipient = signer.address
     }
 
+    // TODO: consider using fallback compression here instead of calling swapExact method directly
     const tx = await routerContract.swapExactInputSingle(
       orderBookConfig.orderBookId,
       isask,
@@ -118,6 +119,7 @@ task('swapExactOutput')
       recipient = signer.address
     }
 
+    // TODO: consider using fallback compression here instead of calling swapExact method directly
     const tx = await routerContract.swapExactOutputSingle(
       orderBookConfig.orderBookId,
       isask,
