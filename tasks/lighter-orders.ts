@@ -1,0 +1,184 @@
+import {task} from 'hardhat/config'
+import {boolean, int} from 'hardhat/internal/core/params/argumentTypes'
+import {BigNumber, ContractTransaction} from 'ethers'
+import {
+  OrderBookKey,
+  getLighterConfig,
+  OrderBookConfig,
+  CreateOrderEvent,
+  SwapEvent,
+  CancelLimitOrderEvent,
+  CANCEL_LIMIT_ORDER_EVENT_NAME,
+  SWAP_EVENT_NAME,
+  CREATE_ORDER_EVENT_NAME,
+} from '../config'
+import {
+  isSuccessful,
+  parseToAmountBase,
+  parseToPriceBase,
+  getOrderBookConfigFromAddress,
+  getAllLighterEvents,
+  getCreateLimitOrderFallbackData,
+  getCancelLimitOrderFallbackData,
+} from '../shared'
+import {OrderType} from '../config'
+import {HardhatRuntimeEnvironment} from 'hardhat/types'
+import {formatUnits} from 'ethers/lib/utils'
+
+async function printCreateOrderExecution(
+  tx: ContractTransaction,
+  orderBookConfig: OrderBookConfig,
+  hre: HardhatRuntimeEnvironment
+) {
+  await tx.wait()
+  const successful = await isSuccessful(hre.ethers.provider, tx.hash)
+
+  if (!successful) {
+    console.log(`createOrder Transaction: ${tx.hash} failed`)
+    return
+  }
+
+  const allEvents = await getAllLighterEvents(tx.hash, hre)
+  let createOrderEvent: CreateOrderEvent | null = null
+  let swapEvents: SwapEvent[] = []
+  for (const event of allEvents) {
+    if (event.eventName == CREATE_ORDER_EVENT_NAME) {
+      createOrderEvent = event as CreateOrderEvent
+    }
+    if (event.eventName == SWAP_EVENT_NAME) {
+      swapEvents.push(event as SwapEvent)
+    }
+  }
+
+  if (createOrderEvent == null) {
+    console.warn(`no order was created but transaction was successful`)
+    return
+  }
+
+  let remainingAmount0 = createOrderEvent.amount0Base.mul(orderBookConfig.sizeTick)
+  let price = createOrderEvent.priceBase.mul(orderBookConfig.priceTick)
+  for (const swap of swapEvents) {
+    remainingAmount0 = remainingAmount0.sub(swap.amount0)
+  }
+
+  console.log(
+    `createOrder Transaction: ${tx.hash} successful\n` +
+      `orderId:${createOrderEvent.id} ` +
+      (remainingAmount0.eq(0)
+        ? `executed completely at best market price`
+        : `resting amount ${formatUnits(remainingAmount0, orderBookConfig.token0Precision)} ` +
+          `@ ${formatUnits(price, orderBookConfig.token1Precision)}`)
+  )
+
+  if (swapEvents.length == 0) {
+    console.log('no swaps triggered')
+  } else {
+    console.log('swaps triggered')
+    for (const swap of swapEvents) {
+      const price = swap.amount1.mul(BigNumber.from(10).pow(orderBookConfig.token0Precision)).div(swap.amount0)
+
+      if (createOrderEvent.isAsk) {
+        console.log(
+          `${formatUnits(swap.amount0, orderBookConfig.token0Precision)} ${orderBookConfig.token0Symbol} for ` +
+            `${formatUnits(swap.amount1, orderBookConfig.token1Precision)} ${orderBookConfig.token1Symbol} ` +
+            `(price of ${formatUnits(price, orderBookConfig.token1Precision)})`
+        )
+      } else {
+        console.log(
+          `${formatUnits(swap.amount1, orderBookConfig.token1Precision)} ${orderBookConfig.token1Symbol} for ` +
+            `${formatUnits(swap.amount0, orderBookConfig.token0Precision)} ${orderBookConfig.token0Symbol} ` +
+            `(price of ${formatUnits(price, orderBookConfig.token1Precision)})`
+        )
+      }
+    }
+  }
+}
+
+task('createOrder')
+  .addParam('orderbookname')
+  .addParam('ordertype', 'orderType can take values: 0 for LimitOrder, 2 for FoKOrder and 3 for IoCOrder', 0, int, true)
+  .addParam('amount')
+  .addParam('price')
+  .addParam('isask', 'whatever or not order is ask', null, boolean)
+  .setDescription('create Limit Order via Router')
+  .setAction(async ({orderbookname, ordertype, amount: amountStr, price: priceStr, isask}, hre) => {
+    const lighterConfig = await getLighterConfig()
+    const orderBookAddress = lighterConfig.OrderBooks[orderbookname as OrderBookKey]
+    const orderBookConfig = await getOrderBookConfigFromAddress(orderBookAddress, hre)
+
+    const amountBase = parseToAmountBase(amountStr, orderBookConfig)
+    const priceBase = parseToPriceBase(priceStr, orderBookConfig)
+
+    // make sure min amounts for order are satisfied
+    if (orderBookConfig.minToken0BaseAmount.gt(amountBase)) {
+      throw `amount0 (${orderBookConfig.token0Symbol}) too small (increase amount of order)`
+    }
+    if (orderBookConfig.minToken1BaseAmount.gt(amountBase.mul(priceBase))) {
+      throw `amount1 (${orderBookConfig.token1Symbol}) too small (increase price or amount of order)`
+    }
+
+    const txData = getCreateLimitOrderFallbackData(
+      orderBookConfig.orderBookId,
+      ordertype as OrderType,
+      amountBase,
+      priceBase,
+      isask
+    )
+
+    const [signer] = await hre.ethers.getSigners()
+    const tx = await signer.sendTransaction({
+      to: lighterConfig.Router,
+      data: txData,
+    })
+
+    await printCreateOrderExecution(tx, orderBookConfig, hre)
+  })
+
+async function printCancelOrderExecution(
+  tx: ContractTransaction,
+  orderBookConfig: OrderBookConfig,
+  hre: HardhatRuntimeEnvironment
+) {
+  await tx.wait()
+  const successful = await isSuccessful(hre.ethers.provider, tx.hash)
+
+  if (!successful) {
+    console.log(`cancelorder Transaction: ${tx.hash} failed`)
+    return
+  }
+
+  const allEvents = await getAllLighterEvents(tx.hash, hre)
+  let cancelOrderEvent: CancelLimitOrderEvent | null = null
+  for (const event of allEvents) {
+    if (event.eventName == CANCEL_LIMIT_ORDER_EVENT_NAME) {
+      cancelOrderEvent = event as CancelLimitOrderEvent
+    }
+  }
+
+  if (cancelOrderEvent == null) {
+    console.warn(`order already canceled or not active`)
+    return
+  }
+
+  console.log(`cancelOrder Transaction: ${tx.hash} successful\norderId:${cancelOrderEvent.id}`)
+}
+
+task('cancelOrder')
+  .addParam('orderbookname')
+  .addParam('id')
+  .setDescription('cancel Limit Order')
+  .setAction(async ({orderbookname, id}, hre) => {
+    const lighterConfig = await getLighterConfig()
+    const orderBookAddress = lighterConfig.OrderBooks[orderbookname as OrderBookKey]
+    const orderBookConfig = await getOrderBookConfigFromAddress(orderBookAddress, hre)
+
+    const txData = getCancelLimitOrderFallbackData(orderBookConfig.orderBookId, [id])
+
+    const [signer] = await hre.ethers.getSigners()
+    const tx = await signer.sendTransaction({
+      to: lighterConfig.Router,
+      data: txData,
+    })
+
+    await printCancelOrderExecution(tx, orderBookConfig, hre)
+  })

@@ -1,28 +1,45 @@
-import {ChainId, LighterConfig, OrderBookKey, Token} from './types'
+import {ParseEventFunctions} from '../shared'
+import {
+  ChainId,
+  LighterConfig,
+  LighterContracts,
+  LighterEventSignature,
+  LighterEventType,
+  OrderBookKey,
+  OrderType,
+  Token,
+} from './types'
 
-const lighterConfigs: {
+// Function to get the string representation of an enum value
+export const getOrderTypeString = (value: OrderType): string => {
+  switch (value) {
+    case OrderType.LimitOrder:
+      return 'LimitOrder'
+    case OrderType.FoKOrder:
+      return 'FoKOrder'
+    case OrderType.IoCOrder:
+      return 'IoCOrder'
+    case OrderType.PerformanceLimitOrder:
+      return 'PerformaceLimitOrder'
+    default:
+      throw new Error('Invalid enum value')
+  }
+}
+
+export const lighterConfigs: {
   [ChainId: string]: LighterConfig
 } = {
   [ChainId.ARBITRUM_GOERLI]: {
-    Router: '0x42E138965BaCDdF6E1fb2774C55ab84b471c0ab7',
-    Factory: '0xB15457ea816677564145AF39D92A9aE68fde1E96',
+    Router: '0x69533aA255E728995044baD3F713EA0F3E786c98',
+    Factory: '0xF38d66921bD3d26A92886dbB1ee49bE669E3FCfE',
     OrderBooks: {
-      [OrderBookKey.WETH_USDC]: '0x5Fd98c554B29E0DE9DcF09eEd3339367C62b2606',
-      [OrderBookKey.WBTC_USDC]: '0xa791f2eC05b6A6771397B4AE4fAb42E84bb22008',
+      [OrderBookKey.WETH_USDC]: '0xc5aac3b83228a5c69efb4c60c00a45b576230a50',
+      [OrderBookKey.WBTC_USDC]: '0xcA31078C52f770BA2EA95BFbE327a25cFc793230',
     },
     Tokens: {
       [Token.WETH]: '0x4d541f0b8039643783492f9865c7f7de4f54eb5f',
       [Token.WBTC]: '0xf133eb356537f0b3b4fdfb98233b45ef8138aa56',
       [Token.USDC]: '0xcc4a8fa63ce5c6a7f4a7a3d2ebcb738ddcd31209',
-
-      // this are not real AAVE tokens, but they are here so the tests are passing
-      // when deploying tokens using testnet forking
-      [Token.aArbWETH]: '0x4d541f0b8039643783492f9865c7f7de4f54eb5f',
-      [Token.aArbWBTC]: '0xf133eb356537f0b3b4fdfb98233b45ef8138aa56',
-      [Token.aArbUSDC]: '0xcc4a8fa63ce5c6a7f4a7a3d2ebcb738ddcd31209',
-      [Token.vArbWETH]: '0x4d541f0b8039643783492f9865c7f7de4f54eb5f',
-      [Token.vArbWBTC]: '0xf133eb356537f0b3b4fdfb98233b45ef8138aa56',
-      [Token.vArbUSDC]: '0xcc4a8fa63ce5c6a7f4a7a3d2ebcb738ddcd31209',
     },
     Vault: {
       [Token.WETH]: '0x86A9E67c3aE6B87Cc23652B2d72a21CB80dec146',
@@ -58,6 +75,53 @@ const lighterConfigs: {
       [Token.aArbUSDC]: '0x3155c5a49aa31ee99ea7fbcb1258192652a8001c',
     },
     AAVEPool: '0x794a61358D6845594F94dc1DB02A252b5b4814aD',
+  },
+}
+
+export const lighterEventSignatures: {
+  [LighterEventType: string]: LighterEventSignature
+} = {
+  [LighterEventType.CREATE_ORDER_EVENT]: {
+    contractName: LighterContracts.ORDERBOOK,
+    eventSignature: 'CreateOrder(address,uint32,uint64,uint64,bool,uint8)',
+    eventName: 'CreateOrder',
+    parseEventFunction: ParseEventFunctions.parseCreateOrderEventData,
+  },
+  [LighterEventType.CANCEL_LIMIT_ORDER_EVENT]: {
+    contractName: LighterContracts.ORDERBOOK,
+    eventSignature: 'CancelLimitOrder(uint32)',
+    eventName: 'CancelLimitOrder',
+    parseEventFunction: ParseEventFunctions.parseCancelLimitOrderEventData,
+  },
+  [LighterEventType.SWAP_EVENT]: {
+    contractName: LighterContracts.ORDERBOOK,
+    eventSignature: 'Swap(uint32,uint32,address,address,uint256,uint256)',
+    eventName: 'Swap',
+    parseEventFunction: ParseEventFunctions.parseSwapEventData,
+  },
+  [LighterEventType.SWAP_EXACT_AMOUNT_EVENT]: {
+    contractName: LighterContracts.ORDERBOOK,
+    eventSignature: 'SwapExactAmount(address,address,bool,bool,uint256,uint256)',
+    eventName: 'SwapExactAmount',
+    parseEventFunction: ParseEventFunctions.parseSwapExactAmountEventData,
+  },
+  [LighterEventType.FLASH_LOAN_EVENT]: {
+    contractName: LighterContracts.ORDERBOOK,
+    eventSignature: 'FlashLoan(address,address,uint256,uint256)',
+    eventName: 'FlashLoan',
+    parseEventFunction: ParseEventFunctions.parseFlashLoanEventData,
+  },
+  [LighterEventType.CLAIMABLE_BALANCE_INCREASE_EVENT]: {
+    contractName: LighterContracts.ORDERBOOK,
+    eventSignature: 'ClaimableBalanceIncrease(address,uint256,bool)',
+    eventName: 'ClaimableBalanceIncrease',
+    parseEventFunction: ParseEventFunctions.parseClaimableBalanceIncreaseEventData,
+  },
+  [LighterEventType.CLAIMABLE_BALANCE_DECREASE_EVENT]: {
+    contractName: LighterContracts.ORDERBOOK,
+    eventSignature: 'ClaimableBalanceDecrease(address,uint256,bool)',
+    eventName: 'ClaimableBalanceDecrease',
+    parseEventFunction: ParseEventFunctions.parseClaimableBalanceDecreaseEventData,
   },
 }
 
