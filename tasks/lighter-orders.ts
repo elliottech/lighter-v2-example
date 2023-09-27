@@ -109,6 +109,14 @@ task('createOrder')
     const amountBase = parseToAmountBase(amountStr, orderBookConfig)
     const priceBase = parseToPriceBase(priceStr, orderBookConfig)
 
+    // make sure min amounts for order are satisfied
+    if (orderBookConfig.minToken0BaseAmount.gt(amountBase)) {
+      throw `amount0 (${orderBookConfig.token0Symbol}) too small (increase amount of order)`
+    }
+    if (orderBookConfig.minToken1BaseAmount.gt(amountBase.mul(priceBase))) {
+      throw `amount1 (${orderBookConfig.token1Symbol}) too small (increase price or amount of order)`
+    }
+
     const txData = getCreateLimitOrderFallbackData(
       orderBookConfig.orderBookId,
       ordertype as OrderType,
