@@ -1,4 +1,4 @@
-import {BigNumber} from 'ethers'
+import {BigNumber, BigNumberish} from 'ethers'
 import {NumberToCallData} from './calldata'
 import {SizePaddedNumber} from './size-padded-number'
 import {OrderType} from '../config'
@@ -44,6 +44,18 @@ export function getOrderFallbackData(
   } else {
     data += new SizePaddedNumber(amount0Base).getHexString()
     data += new SizePaddedNumber(priceBase).getHexString()
+  }
+
+  return data
+}
+
+export function getCancelLimitOrderFallbackData(orderBookId: BigNumberish, orderIDs: [BigNumberish]) {
+  let data = '0x'
+  data += NumberToCallData(3, 1)
+  data += NumberToCallData(orderBookId, 1)
+
+  for (let orderID of orderIDs) {
+    data += new SizePaddedNumber(orderID).getHexString()
   }
 
   return data

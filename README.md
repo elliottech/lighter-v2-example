@@ -104,3 +104,20 @@ $ npx hardhat --network arbgoerli createOrder --orderbookname WETH-USDC --isask 
 # swaps triggered
 # 0.25 WETH for 475.0 USDC (price of 1900.0)
 ```
+
+
+### Cancel Limit Order
+Once a limit order has been created, the funds are locked in the order book at the specified price and quantity. If the order has not been fully executed, it can be canceled, and the remaining tokens will be returned to the owner.
+
+It's important to note that sending a transaction is not an atomic action, which means that the order can still be matched against until the transaction is processed and executed.
+
+```shell
+# canceling order with id 77
+$ npx hardhat --network arbgoerli cancelOrder --orderbookname WETH-USDC --id 77
+# cancelOrder Transaction: 0xcac127fa57d40001a77e1c1b7b20f0e7c04326f8b3c448cde595ee2ec197f95b successful
+# orderId:77
+
+# order with id 76 is already executed, so there's nothing to cancel
+$ npx hardhat --network arbgoerli cancelOrder --orderbookname WETH-USDC --id 76
+# order already canceled or not active
+```

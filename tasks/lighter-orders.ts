@@ -1,7 +1,17 @@
 import {task} from 'hardhat/config'
 import {boolean, int} from 'hardhat/internal/core/params/argumentTypes'
 import {BigNumber, ContractTransaction} from 'ethers'
-import {OrderBookKey, getLighterConfig, OrderBookConfig, CreateOrderEvent, SwapEvent} from '../config'
+import {
+  OrderBookKey,
+  getLighterConfig,
+  OrderBookConfig,
+  CreateOrderEvent,
+  SwapEvent,
+  CancelLimitOrderEvent,
+  CANCEL_LIMIT_ORDER_EVENT_NAME,
+  SWAP_EVENT_NAME,
+  CREATE_ORDER_EVENT_NAME,
+} from '../config'
 import {
   isSuccessful,
   parseToAmountBase,
@@ -9,6 +19,7 @@ import {
   getOrderBookConfigFromAddress,
   getAllLighterEvents,
   getOrderFallbackData,
+  getCancelLimitOrderFallbackData,
 } from '../shared'
 import {OrderType} from '../config'
 import {HardhatRuntimeEnvironment} from 'hardhat/types'
@@ -31,16 +42,16 @@ async function printCreateOrderExecution(
   let createOrderEvent: CreateOrderEvent | null = null
   let swapEvents: SwapEvent[] = []
   for (const event of allEvents) {
-    if (event.eventName == 'CreateOrderEvent') {
+    if (event.eventName == CREATE_ORDER_EVENT_NAME) {
       createOrderEvent = event as CreateOrderEvent
     }
-    if (event.eventName == 'SwapEvent') {
+    if (event.eventName == SWAP_EVENT_NAME) {
       swapEvents.push(event as SwapEvent)
     }
   }
 
   if (createOrderEvent == null) {
-    console.warn(`no swap event was triggered but transaction was successful`)
+    console.warn(`no order was created but transaction was successful`)
     return
   }
 
@@ -113,4 +124,53 @@ task('createOrder')
     })
 
     await printCreateOrderExecution(tx, orderBookConfig, hre)
+  })
+
+async function printCancelOrderExecution(
+  tx: ContractTransaction,
+  orderBookConfig: OrderBookConfig,
+  hre: HardhatRuntimeEnvironment
+) {
+  await tx.wait()
+  const successful = await isSuccessful(hre.ethers.provider, tx.hash)
+
+  if (!successful) {
+    console.log(`cancelorder Transaction: ${tx.hash} failed`)
+    return
+  }
+
+  const allEvents = await getAllLighterEvents(tx.hash, hre)
+  let cancelOrderEvent: CancelLimitOrderEvent | null = null
+  for (const event of allEvents) {
+    if (event.eventName == CANCEL_LIMIT_ORDER_EVENT_NAME) {
+      cancelOrderEvent = event as CancelLimitOrderEvent
+    }
+  }
+
+  if (cancelOrderEvent == null) {
+    console.warn(`order already canceled or not active`)
+    return
+  }
+
+  console.log(`cancelOrder Transaction: ${tx.hash} successful\norderId:${cancelOrderEvent.id}`)
+}
+
+task('cancelOrder')
+  .addParam('orderbookname')
+  .addParam('id')
+  .setDescription('cancel Limit Order')
+  .setAction(async ({orderbookname, id}, hre) => {
+    const lighterConfig = await getLighterConfig()
+    const orderBookAddress = lighterConfig.OrderBooks[orderbookname as OrderBookKey]
+    const orderBookConfig = await getOrderBookConfigFromAddress(orderBookAddress, hre)
+
+    const txData = getCancelLimitOrderFallbackData(orderBookConfig.orderBookId, [id])
+
+    const [signer] = await hre.ethers.getSigners()
+    const tx = await signer.sendTransaction({
+      to: lighterConfig.Router,
+      data: txData,
+    })
+
+    await printCancelOrderExecution(tx, orderBookConfig, hre)
   })
