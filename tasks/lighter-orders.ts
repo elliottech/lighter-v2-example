@@ -104,7 +104,8 @@ task('createOrder')
   .setAction(async ({orderbookname, ordertype, amount: amountStr, price: priceStr, isask}, hre) => {
     const lighterConfig = await getLighterConfig()
     const orderBookAddress = lighterConfig.OrderBooks[orderbookname as OrderBookKey]
-    if (!orderBookAddress) {
+
+    if(!orderBookAddress) {
       throw new Error(`Invalid OrderbookAddress`)
     }
 
