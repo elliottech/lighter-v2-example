@@ -1,21 +1,66 @@
 import {task} from 'hardhat/config'
-import {boolean} from 'hardhat/internal/core/params/argumentTypes'
-import {OrderBookKey, getLighterConfig} from '../config'
+import {boolean, string} from 'hardhat/internal/core/params/argumentTypes'
+import {OrderBookKey, getLighterConfig, SwapExactAmountEvent, OrderBookConfig} from '../config'
 import {isSuccessful, getRouterAt, parseAmount, getOrderBookConfigFromAddress, getAllLighterEvents} from '../shared'
+import {formatUnits} from 'ethers/lib/utils'
+import {HardhatRuntimeEnvironment} from 'hardhat/types'
+import {ContractTransaction} from 'ethers'
 
-// npx hardhat swapExactInputSingle --orderbookname WETH-USDC --isask false --exactinput 2000 --minoutput 1 --recipient '0xf5306fc60C48E3E2fBf9262D699Cb05C4910e6D9' --unwrap false --network arbgoerli
-task('swapExactInputSingle')
+async function printSwapExactExecution(
+  tx: ContractTransaction,
+  orderBookConfig: OrderBookConfig,
+  hre: HardhatRuntimeEnvironment
+) {
+  await tx.wait()
+  const successful = await isSuccessful(hre.ethers.provider, tx.hash)
+
+  if (!successful) {
+    console.log(`swapExact Transaction: ${tx.hash} failed`)
+    return
+  }
+
+  const allEvents = await getAllLighterEvents(tx.hash, hre)
+  let swapExactEvent: SwapExactAmountEvent | null = null
+  for (const event of allEvents) {
+    if (event.eventName == 'SwapExactAmountEvent') {
+      swapExactEvent = event as SwapExactAmountEvent
+    }
+  }
+
+  if (swapExactEvent == null) {
+    console.warn(`no swap event was triggered but transaction was successful`)
+    return
+  }
+
+  const swapped0 = formatUnits(swapExactEvent.swapAmount0, orderBookConfig.token0Precision)
+  const swapped1 = formatUnits(swapExactEvent.swapAmount1, orderBookConfig.token1Precision)
+
+  const swappedToken0 = swapExactEvent.isAsk
+
+  console.log(
+    `swapExact Transaction: ${tx.hash} successful\n` +
+      `swapped ${swappedToken0 ? swapped0 : swapped1} ${
+        swappedToken0 ? orderBookConfig.token0Symbol : orderBookConfig.token1Symbol
+      } ` +
+      `for ${swappedToken0 ? swapped1 : swapped0} ${
+        swappedToken0 ? orderBookConfig.token1Symbol : orderBookConfig.token0Symbol
+      }`
+  )
+}
+
+task('swapExactInput')
   .addParam('orderbookname')
   .addParam('isask', 'whatever or not order is ask', null, boolean)
   .addParam('exactinput')
-  .addParam('minoutput')
-  .addParam('recipient')
-  .addParam('unwrap', 'unwrap can be true or false', null, boolean)
-  .setDescription('swapExactInputSingle via Router')
+  .addParam('minoutput', 'min amount to be received', '0', string)
+  .addParam('recipient', 'recipient of the tokens', '', string)
+  .addParam('unwrap', 'unwrap received token (only available if output token is WETH)', false, boolean)
+  .setDescription('perform swapExactInputSingle via Router')
   .setAction(async ({orderbookname, isask, exactinput, minoutput, recipient, unwrap}, hre) => {
+    const [signer] = await hre.ethers.getSigners()
     const lighterConfig = await getLighterConfig()
-    const routerContract = getRouterAt(lighterConfig.Router, hre)
-    const orderBookAddress = lighterConfig.OrderBooks[orderbookname as OrderBookKey] as string
+    const routerContract = await getRouterAt(lighterConfig.Router, hre)
+    const orderBookAddress = lighterConfig.OrderBooks[orderbookname as OrderBookKey]
     const orderBookConfig = await getOrderBookConfigFromAddress(orderBookAddress, hre)
     const exactInputAmount = parseAmount(
       exactinput,
@@ -25,41 +70,34 @@ task('swapExactInputSingle')
       minoutput,
       isask ? orderBookConfig.token1Precision : orderBookConfig.token0Precision
     )
-    const tx = await (
-      await routerContract
-    ).swapExactInputSingle(orderBookConfig.orderBookId, isask, exactInputAmount, minOutputAmount, recipient, unwrap)
-    await tx.wait()
-    const successIndicator = await isSuccessful(hre.ethers.provider, tx.hash)
-
-    if (successIndicator) {
-      const swapExactAmountEvents = await getAllLighterEvents(orderBookAddress, tx.hash, hre)
-
-      console.log(
-        `swapExactInputSingle Transaction: ${
-          tx.hash
-        } is successful on OrderBook: ${orderbookname} and SwapExactAmount: ${JSON.stringify(
-          swapExactAmountEvents,
-          null,
-          2
-        )} emitted`
-      )
-    } else {
-      console.log(`swapExactInputSingle Transaction: ${tx.hash} on OrderBook: ${orderbookname} failed`)
+    if (recipient == '') {
+      recipient = signer.address
     }
+
+    const tx = await routerContract.swapExactInputSingle(
+      orderBookConfig.orderBookId,
+      isask,
+      exactInputAmount,
+      minOutputAmount,
+      recipient,
+      unwrap
+    )
+
+    await printSwapExactExecution(tx, orderBookConfig, hre)
   })
 
-// npx hardhat swapExactOutputSingle --orderbookname WETH-USDC --isask false --exactoutput 1 --maxinput 2010 --recipient '0xf5306fc60C48E3E2fBf9262D699Cb05C4910e6D9' --unwrap false --network arbgoerli
-task('swapExactOutputSingle')
+task('swapExactOutput')
   .addParam('orderbookname')
   .addParam('isask', 'whatever or not order is ask', null, boolean)
   .addParam('exactoutput')
-  .addParam('maxinput')
-  .addParam('recipient')
-  .addParam('unwrap', 'unwrap can be true or false', null, boolean)
-  .setDescription('swapExactOutputSingle via Router')
+  .addParam('maxinput', 'max input amount paid', '10000', string)
+  .addParam('recipient', 'recipient of the tokens', '', string)
+  .addParam('unwrap', 'unwrap received token (only available if output token is WETH)', false, boolean)
+  .setDescription('perform swapExactOutputSingle via Router')
   .setAction(async ({orderbookname, isask, exactoutput, maxinput, recipient, unwrap}, hre) => {
+    const [signer] = await hre.ethers.getSigners()
     const lighterConfig = await getLighterConfig()
-    const routerContract = getRouterAt(lighterConfig.Router, hre)
+    const routerContract = await getRouterAt(lighterConfig.Router, hre)
     const orderBookAddress = lighterConfig.OrderBooks[orderbookname as OrderBookKey] as string
     const orderBookConfig = await getOrderBookConfigFromAddress(orderBookAddress, hre)
     const exactOutputAmount = parseAmount(
@@ -70,25 +108,17 @@ task('swapExactOutputSingle')
       maxinput,
       isask ? orderBookConfig.token0Precision : orderBookConfig.token1Precision
     )
-    const tx = await (
-      await routerContract
-    ).swapExactOutputSingle(orderBookConfig.orderBookId, isask, exactOutputAmount, maxInputAmount, recipient, unwrap)
-    await tx.wait()
-    const successIndicator = await isSuccessful(hre.ethers.provider, tx.hash)
-
-    if (successIndicator) {
-      const swapExactAmountEvents = await getAllLighterEvents(orderBookAddress, tx.hash, hre)
-
-      console.log(
-        `swapExactOutputSingle Transaction: ${
-          tx.hash
-        } is successful on OrderBook: ${orderbookname} and SwapExactAmount: ${JSON.stringify(
-          swapExactAmountEvents,
-          null,
-          2
-        )} emitted`
-      )
-    } else {
-      console.log(`swapExactOutputSingle Transaction: ${tx.hash} on OrderBook: ${orderbookname} failed`)
+    if (recipient == '') {
+      recipient = signer.address
     }
+
+    const tx = await routerContract.swapExactOutputSingle(
+      orderBookConfig.orderBookId,
+      isask,
+      exactOutputAmount,
+      maxInputAmount,
+      recipient,
+      unwrap
+    )
+    await printSwapExactExecution(tx, orderBookConfig, hre)
   })

@@ -81,7 +81,7 @@ export const parseCreateOrderEventData = (eventData: ethers.utils.LogDescription
     id: BigNumber.from(eventData.args[1].toString()),
     amount0Base: BigNumber.from(eventData.args[2].toString()),
     priceBase: BigNumber.from(eventData.args[3].toString()),
-    isAsk: eventData.args[4],
+    isAsk: eventData.args[4].toLowerCase() === 'true',
     orderType: getOrderTypeFromValue(parseInt(eventData.args[5])),
   }
 }
@@ -118,8 +118,8 @@ export const parseSwapExactAmountEventData = (eventData: ethers.utils.LogDescrip
     eventName: 'SwapExactAmountEvent',
     sender: eventData.args[0].toString(),
     recipient: eventData.args[1].toString(),
-    isExactInput: eventData.args[2].toString(),
-    isAsk: eventData.args[3].toString(),
+    isExactInput: eventData.args[2].toString().toLowerCase() === 'true',
+    isAsk: eventData.args[3].toString().toLowerCase() === 'true',
     swapAmount0: BigNumber.from(eventData.args[4]),
     swapAmount1: BigNumber.from(eventData.args[5]),
   }
@@ -150,7 +150,7 @@ export const parseClaimableBalanceIncreaseEventData = (
     eventName: 'ClaimableBalanceIncreaseEvent',
     owner: eventData.args[0].toString(),
     amountDelta: BigNumber.from(eventData.args[1].toString()),
-    isToken0: eventData.args[2].toString(),
+    isToken0: eventData.args[2].toString().toLowerCase() === 'true',
   }
 }
 
@@ -165,7 +165,7 @@ export const parseClaimableBalanceDecreaseEventData = (
     eventName: 'ClaimableBalanceDecreaseEvent',
     owner: eventData.args[0].toString(),
     amountDelta: BigNumber.from(eventData.args[1].toString()),
-    isToken0: eventData.args[2].toString(),
+    isToken0: eventData.args[2].toString().toLowerCase() === 'true',
   }
 }
 

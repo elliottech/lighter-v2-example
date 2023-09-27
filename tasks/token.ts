@@ -2,11 +2,14 @@ import {task} from 'hardhat/config'
 import {formatUnits, parseUnits} from 'ethers/lib/utils'
 import {HardhatRuntimeEnvironment} from 'hardhat/types'
 import {IERC20Metadata} from '../typechain-types'
-import {getLighterConfig, Token} from '../config'
+import {getLighterConfig, LighterConfig, Token} from '../config'
 
-export async function getTokenAt(symbol: string, hre: HardhatRuntimeEnvironment): Promise<IERC20Metadata> {
+export async function getTokenAt(
+  config: LighterConfig,
+  symbol: string,
+  hre: HardhatRuntimeEnvironment
+): Promise<IERC20Metadata> {
   const [signer] = await hre.ethers.getSigners()
-  const config = await getLighterConfig()
   const address = config.Tokens[symbol as Token]!
   return (await hre.ethers.getContractAt('IERC20Metadata', address, signer)) as IERC20Metadata
 }
@@ -16,7 +19,8 @@ task('token.transfer')
   .addParam('to', 'address of recipient')
   .addParam('amount', 'amount of token (without decimals)')
   .setAction(async ({symbol, to, amount}, hre) => {
-    const token = await getTokenAt(symbol, hre)
+    const config = await getLighterConfig()
+    const token = await getTokenAt(config, symbol, hre)
 
     const decimals = await token.decimals()
     await token.transfer(to, parseUnits(amount, decimals))
@@ -28,7 +32,8 @@ task('token.balance')
   .addParam('address', 'address of user', '')
   .setDescription('displays tokens for a specific address')
   .setAction(async ({symbol, address}, hre) => {
-    const token = await getTokenAt(symbol, hre)
+    const config = await getLighterConfig()
+    const token = await getTokenAt(config, symbol, hre)
 
     if (address == '') {
       const [signer] = await hre.ethers.getSigners()
@@ -38,4 +43,18 @@ task('token.balance')
     const decimals = await token.decimals()
     const balance = await token.balanceOf(address)
     console.log(`address ${address} ${formatUnits(balance, decimals)}`)
+  })
+
+task('token.approveRouter')
+  .addParam('symbol', 'symbol of the ERC20 token')
+  .addParam('amount', 'amount of token (without decimals)')
+  .setAction(async ({symbol, amount}, hre) => {
+    const config = await getLighterConfig()
+    const token = await getTokenAt(config, symbol, hre)
+
+    const router = config.Router
+
+    const decimals = await token.decimals()
+    await token.approve(router, parseUnits(amount, decimals))
+    console.log(`approved ${amount} to router`)
   })
