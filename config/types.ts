@@ -2,7 +2,7 @@ import {BigNumber} from 'ethers'
 
 export enum OrderType {
   LimitOrder,
-  PerformaceLimitOrder,
+  PerformanceLimitOrder,
   FoKOrder,
   IoCOrder,
 }
