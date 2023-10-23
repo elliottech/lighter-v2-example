@@ -60,11 +60,12 @@ export const lighterConfigs: {
     AAVEPool: '',
   },
   [ChainId.ARBITRUM]: {
-    Router: '',
-    Factory: '',
+    Router: '0x86D4Ef07492605D30124E25B1E08E3C489D39807',
+    Factory: '0xDa66c2ADFAF2c524283Ff9e72Ef7702a254C9127',
     OrderBooks: {
-      [OrderBookKey.WETH_USDC]: '',
-      [OrderBookKey.WBTC_USDC]: '',
+      [OrderBookKey.WETH_USDCE]: '0x33a5A405B97C6e77f3cA07a55FeF08454F5550bd',
+      [OrderBookKey.USDT_USDCE]: '0xd4AF408457D0084184C68eda2b84b5990c6aefBf',
+      [OrderBookKey.USDC_USDCE]: '0x67D8Ed811feb16F826a449D7CdBeBa5b4e464382',
     },
     Tokens: {
       [Token.WETH]: '0x82aF49447D8a07e3bd95BD0d56f35241523fBab1',

@@ -17,6 +17,9 @@ export enum OrderBookKey {
   BUSD_USDT = 'BUSD-USDT',
   BTCB_USDT = 'BTCB-USDT',
   USDC_USDT = 'USDC-USDT',
+  WETH_USDCE = 'WETH-USDCE',
+  USDT_USDCE = 'USDT-USDCE',
+  USDC_USDCE = 'USDC-USDCE',
 }
 
 export enum Token {
