@@ -1,8 +1,7 @@
 import {ethers} from 'hardhat'
 import {BigNumber} from 'ethers'
 import {expect} from 'chai'
-import {fundAccount} from './token'
-import {deployTokens, getAAVEPoolAt, getATokenAt, ParseUSDC, ParseWETH, reset} from './shared'
+import {deployTokens, fundAccount, getAAVEPoolAt, getATokenAt, ParseUSDC, ParseWETH, reset} from './shared'
 import {getLighterConfig} from '../config'
 
 export const AAVEStableRate = BigNumber.from(1)
@@ -52,7 +51,7 @@ describe('AAVE', async () => {
 
   it('it can deposit USDC.e', async () => {
     const config = await getLighterConfig()
-    const pool = await getAAVEPoolAt(config.AAVEPool)
+    const pool = await getAAVEPoolAt(config.AAVEPool!)
     const [signer] = await ethers.getSigners()
 
     const {ausdc, usdc} = await deployTokens()
@@ -66,7 +65,7 @@ describe('AAVE', async () => {
   })
   it('it can deposit WETH', async () => {
     const config = await getLighterConfig()
-    const pool = await getAAVEPoolAt(config.AAVEPool)
+    const pool = await getAAVEPoolAt(config.AAVEPool!)
     const [signer] = await ethers.getSigners()
 
     const {aweth, weth} = await deployTokens()
@@ -80,7 +79,7 @@ describe('AAVE', async () => {
   })
   it('it can borrow USDC.e', async () => {
     const config = await getLighterConfig()
-    const pool = await getAAVEPoolAt(config.AAVEPool)
+    const pool = await getAAVEPoolAt(config.AAVEPool!)
     const [signer] = await ethers.getSigners()
     const {vusdc, usdc, weth} = await deployTokens()
 

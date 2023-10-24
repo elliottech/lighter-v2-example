@@ -1,7 +1,6 @@
 import {ethers} from 'hardhat'
 import {expect} from 'chai'
-import {deployTokens, ParseUSDC, getAAVEPoolAt, reset, deployMarginWallet} from './shared'
-import {fundAccount} from './token'
+import {deployTokens, ParseUSDC, getAAVEPoolAt, reset, deployMarginWallet, fundAccount} from './shared'
 import {getLighterConfig} from '../config'
 
 describe('Margin wallet', async () => {
@@ -12,7 +11,7 @@ describe('Margin wallet', async () => {
   it('it deposits and withdraws', async () => {
     const [signer] = await ethers.getSigners()
     const config = await getLighterConfig()
-    const pool = await getAAVEPoolAt(config.AAVEPool)
+    const pool = await getAAVEPoolAt(config.AAVEPool!)
     const wallet = await deployMarginWallet(pool)
 
     const {ausdc, usdc} = await deployTokens()
