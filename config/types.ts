@@ -54,7 +54,7 @@ export interface LighterConfig {
   OrderBooks: Partial<Record<OrderBookKey, string>>
   Tokens: Partial<Record<Token, string>>
   Vault: Partial<Record<Token, string>>
-  AAVEPool: string
+  AAVEPool?: string
 }
 
 export interface OrderBookConfig {

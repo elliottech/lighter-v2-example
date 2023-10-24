@@ -30,34 +30,24 @@ export const lighterConfigs: {
   [ChainId: string]: LighterConfig
 } = {
   [ChainId.ARBITRUM_GOERLI]: {
-    Router: '0x69533aA255E728995044baD3F713EA0F3E786c98',
-    Factory: '0xF38d66921bD3d26A92886dbB1ee49bE669E3FCfE',
+    Router: '0xc86E2d10e6C4F2b300c40C7d52f23F7625eCf436',
+    Factory: '0x2290519aAaae9D9F6571691232cb8a1e8f001c53',
     OrderBooks: {
-      [OrderBookKey.WETH_USDC]: '0xc5aac3b83228a5c69efb4c60c00a45b576230a50',
-      [OrderBookKey.WBTC_USDC]: '0xca31078c52f770ba2ea95bfbe327a25cfc793230',
-      [OrderBookKey.USDT_USDC]: '0x697a5879bad95037929951bc719b3cb8f15bc867',
+      [OrderBookKey.WETH_USDC]: '0xc3481aD2d1113EfabAB0d7c4991AE137C966e90f',
+      [OrderBookKey.WBTC_USDC]: '0x74Ca7998c6aABA413E9aeCD944770B7AA6B5B59E',
+      [OrderBookKey.USDT_USDC]: '0xCE1BBE1868CE5912b6fD6d5fA5754C41B11e8f7a',
     },
     Tokens: {
       [Token.WETH]: '0x4d541f0b8039643783492f9865c7f7de4f54eb5f',
       [Token.WBTC]: '0xf133eb356537f0b3b4fdfb98233b45ef8138aa56',
       [Token.USDC]: '0xcc4a8fa63ce5c6a7f4a7a3d2ebcb738ddcd31209',
       [Token.USDT]: '0x03fc54FD8572B76b6F4f5177A016Bac11688Fc5F',
-
-      // this are not real AAVE tokens, but they are here so the tests are passing
-      // when deploying tokens using testnet forking
-      [Token.aArbWETH]: '0x4d541f0b8039643783492f9865c7f7de4f54eb5f',
-      [Token.aArbWBTC]: '0xf133eb356537f0b3b4fdfb98233b45ef8138aa56',
-      [Token.aArbUSDC]: '0xcc4a8fa63ce5c6a7f4a7a3d2ebcb738ddcd31209',
-      [Token.vArbWETH]: '0x4d541f0b8039643783492f9865c7f7de4f54eb5f',
-      [Token.vArbWBTC]: '0xf133eb356537f0b3b4fdfb98233b45ef8138aa56',
-      [Token.vArbUSDC]: '0xcc4a8fa63ce5c6a7f4a7a3d2ebcb738ddcd31209',
     },
     Vault: {
       [Token.WETH]: '0x86A9E67c3aE6B87Cc23652B2d72a21CB80dec146',
       [Token.WBTC]: '0x86A9E67c3aE6B87Cc23652B2d72a21CB80dec146',
       [Token.USDC]: '0x86A9E67c3aE6B87Cc23652B2d72a21CB80dec146',
     },
-    AAVEPool: '',
   },
   [ChainId.ARBITRUM]: {
     Router: '0x86D4Ef07492605D30124E25B1E08E3C489D39807',
@@ -100,22 +90,12 @@ export const lighterConfigs: {
       [Token.WETH]: '0x813A9650cda5512a4c6791bb98a30716C5F9FB84',
       [Token.WMATIC]: '0x5d9D20BC86bEEC389B79b247096116deE1B439eC',
       [Token.USDC]: '0x814d30D1bEF64BDca1Ca5CD7631D26C0E057A79b',
-
-      // this are not real AAVE tokens, but they are here so the tests are passing
-      // when deploying tokens using testnet forking
-      [Token.aArbWETH]: '',
-      [Token.aArbWBTC]: '',
-      [Token.aArbUSDC]: '',
-      [Token.vArbWETH]: '',
-      [Token.vArbWBTC]: '',
-      [Token.vArbUSDC]: '',
     },
     Vault: {
       [Token.WETH]: '0x86A9E67c3aE6B87Cc23652B2d72a21CB80dec146',
       [Token.WBTC]: '0x86A9E67c3aE6B87Cc23652B2d72a21CB80dec146',
       [Token.USDC]: '0x86A9E67c3aE6B87Cc23652B2d72a21CB80dec146',
     },
-    AAVEPool: '',
   },
   [ChainId.BSC_TESTNET]: {
     Router: '0xBDeFBfC2134E584EA7d1C8124Ca77157afaae9c6',
@@ -140,7 +120,6 @@ export const lighterConfigs: {
       [Token.BTCB]: '0x86A9E67c3aE6B87Cc23652B2d72a21CB80dec146',
       [Token.USDC]: '0x86A9E67c3aE6B87Cc23652B2d72a21CB80dec146',
     },
-    AAVEPool: '',
   },
   [ChainId.OPT_GOERLI]: {
     Router: '0xD1282905bE4Cbc10F3FA121F0dD515Ea51Be0026',
@@ -159,7 +138,6 @@ export const lighterConfigs: {
       [Token.WBTC]: '0x86A9E67c3aE6B87Cc23652B2d72a21CB80dec146',
       [Token.USDC]: '0x86A9E67c3aE6B87Cc23652B2d72a21CB80dec146',
     },
-    AAVEPool: '',
   },
 }
 
