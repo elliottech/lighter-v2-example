@@ -12,7 +12,7 @@ const config: HardhatUserConfig = {
     hardhat: {
       forking: {
         url: process.env.ARBITRUM_MAINNET_URL ? process.env.ARBITRUM_MAINNET_URL : `https://arb1.arbitrum.io/rpc`,
-        blockNumber: 132173014,
+        blockNumber: 143468900,
       },
     },
     arbgoerli: {

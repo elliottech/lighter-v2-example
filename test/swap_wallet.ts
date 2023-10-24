@@ -1,32 +1,31 @@
 import {ethers} from 'hardhat'
-import {ParseUSDC, ParseWETH, resetTestnet, deployContracts} from './shared'
+import {ParseUSDC, ParseWETH, reset, deployContracts} from './shared'
 import {expect} from 'chai'
 
 describe('Swap wallet', async () => {
   beforeEach(async function () {
-    // TODO: Use mainnet fork when contracts are deployed
-    await resetTestnet()
+    await reset()
   })
 
   it('it swaps exact input USDC for WETH', async () => {
     const {swapWallet: wallet, orderBook} = await deployContracts(true)
 
-    await wallet.swapExactInput(orderBook.address, false, ParseUSDC(1000), ParseWETH(0.25), wallet.address)
+    await wallet.swapExactInput(orderBook.address, false, ParseUSDC(1000), ParseWETH('0.45'), wallet.address)
   })
   it('it swaps exact input WETH for USDC', async () => {
     const {swapWallet: wallet, orderBook} = await deployContracts(true)
 
-    await wallet.swapExactInput(orderBook.address, true, ParseWETH(1.0), ParseUSDC(1000), wallet.address)
+    await wallet.swapExactInput(orderBook.address, true, ParseWETH(0.5), ParseUSDC(900), wallet.address)
   })
   it('it swaps exact output USDC for WETH', async () => {
     const {swapWallet: wallet, orderBook} = await deployContracts(true)
 
-    await wallet.swapExactOutput(orderBook.address, false, ParseWETH(0.25), ParseUSDC(1000), wallet.address)
+    await wallet.swapExactOutput(orderBook.address, false, ParseWETH(0.5), ParseUSDC(1100), wallet.address)
   })
   it('it swaps exact output WETH for USDC', async () => {
     const {swapWallet: wallet, orderBook} = await deployContracts(true)
 
-    await wallet.swapExactOutput(orderBook.address, true, ParseUSDC(1000), ParseWETH(1.0), wallet.address)
+    await wallet.swapExactOutput(orderBook.address, true, ParseUSDC(1000), ParseWETH('0.55'), wallet.address)
   })
 
   it('can withdraw tokens', async () => {

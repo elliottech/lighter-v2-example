@@ -1,7 +1,6 @@
 import {ethers} from 'hardhat'
 import {expect} from 'chai'
-import {deployTokens, ParseUSDC, getAAVEPoolAt, reset, deployMarginWallet} from './shared'
-import {fundAccount} from './token'
+import {deployTokens, ParseUSDC, getAAVEPoolAt, reset, deployMarginWallet, fundAccount} from './shared'
 import {getLighterConfig} from '../config'
 
 describe('Margin wallet', async () => {

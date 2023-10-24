@@ -1,7 +1,6 @@
 import {ethers} from 'hardhat'
 import {IOrderBook} from '../typechain-types'
-import {ParseUSDC, ParseWETH, resetTestnet, deployContracts} from './shared'
-import {fundAccount} from './token'
+import {ParseUSDC, ParseWETH, reset, deployContracts, fundAccount} from './shared'
 import {expect} from 'chai'
 import {BigNumberish} from 'ethers'
 
@@ -12,10 +11,9 @@ async function expectOrderBook(orderBook: IOrderBook, asks: BigNumberish[], bids
   expect(ids_bid).to.eql(bids)
 }
 
-describe('Swap wallet', async () => {
+describe('Market Making wallet', async () => {
   beforeEach(async function () {
-    // TODO: Use mainnet fork when contracts are deployed
-    await resetTestnet()
+    await reset()
   })
 
   it('it creates ask order', async () => {
@@ -24,14 +22,14 @@ describe('Swap wallet', async () => {
     const price = ParseUSDC(2000)
 
     await wallet.createLimitOrder(orderBook.address, amount, price, true, 0)
-    await expectOrderBook(orderBook, [37, 35, 0], [36, 29, 31, 30, 0])
+    await expectOrderBook(orderBook, [9, 4, 5, 0], [7, 6, 8, 0])
 
     // getLimitOrder does not return amounts, but number of ticks (amount0Base and priceBase)
     // to get the returned values as amounts, you need to multiply them by sizeTick and priceTick
     // these values are fixed for each order book and will not change after the contract is deployed.
     const sizeTick = await orderBook.sizeTick()
     const priceTick = await orderBook.priceTick()
-    const order = await orderBook.getLimitOrder(true, 37)
+    const order = await orderBook.getLimitOrder(true, 9)
     expect(order.amount0Base.mul(sizeTick)).to.equal(amount)
     expect(order.priceBase.mul(priceTick)).to.equal(price)
   })
@@ -41,14 +39,14 @@ describe('Swap wallet', async () => {
     const price = ParseUSDC(2000)
 
     await wallet.createLimitOrder(orderBook.address, amount, price, false, 0)
-    await expectOrderBook(orderBook, [35, 0], [37, 36, 29, 31, 30, 0])
+    await expectOrderBook(orderBook, [4, 5, 0], [9, 7, 6, 8, 0])
 
     // getLimitOrder does not return amounts, but number of ticks (amount0Base and priceBase)
     // to get the returned values as amounts, you need to multiply them by sizeTick and priceTick
     // these values are fixed for each order book and will not change after the contract is deployed.
     const sizeTick = await orderBook.sizeTick()
     const priceTick = await orderBook.priceTick()
-    const order = await orderBook.getLimitOrder(false, 37)
+    const order = await orderBook.getLimitOrder(false, 9)
     expect(order.amount0Base.mul(sizeTick)).to.equal(amount)
     expect(order.priceBase.mul(priceTick)).to.equal(price)
   })
@@ -58,10 +56,10 @@ describe('Swap wallet', async () => {
     const price = ParseUSDC(2000)
 
     await wallet.createLimitOrder(orderBook.address, amount, price, false, 0)
-    await expectOrderBook(orderBook, [35, 0], [37, 36, 29, 31, 30, 0])
+    await expectOrderBook(orderBook, [4, 5, 0], [9, 7, 6, 8, 0])
 
-    await wallet.cancelLimitOrder(orderBook.address, 37)
-    await expectOrderBook(orderBook, [35, 0], [36, 29, 31, 30, 0])
+    await wallet.cancelLimitOrder(orderBook.address, 9)
+    await expectOrderBook(orderBook, [4, 5, 0], [7, 6, 8, 0])
   })
   it('cancels all orders', async () => {
     const {mmWallet: wallet, orderBook} = await deployContracts()
@@ -72,10 +70,10 @@ describe('Swap wallet', async () => {
     await wallet.createLimitOrder(orderBook.address, amount, price, false, 0)
     await wallet.createLimitOrder(orderBook.address, amount, price, false, 0)
     await wallet.createLimitOrder(orderBook.address, amount, price, false, 0)
-    await expectOrderBook(orderBook, [35, 0], [37, 38, 39, 40, 36, 29, 31, 30, 0])
+    await expectOrderBook(orderBook, [4, 5, 0], [9, 10, 11, 12, 7, 6, 8, 0])
 
     await wallet.cancelAllLimitOrders(orderBook.address)
-    await expectOrderBook(orderBook, [35, 0], [36, 29, 31, 30, 0])
+    await expectOrderBook(orderBook, [4, 5, 0], [7, 6, 8, 0])
   })
   it('gets all orders', async () => {
     const {mmWallet: wallet, orderBook} = await deployContracts()
@@ -83,13 +81,30 @@ describe('Swap wallet', async () => {
     expect(orders.length).to.equal(5)
 
     expect(orders[0].isAsk).to.equal(true)
-    expect(orders[1].isAsk).to.equal(false)
+    expect(orders[1].isAsk).to.equal(true)
+    expect(orders[2].isAsk).to.equal(false)
+    expect(orders[3].isAsk).to.equal(false)
+    expect(orders[4].isAsk).to.equal(false)
 
-    expect(orders[0].id).to.equal(35)
-    expect(orders[1].id).to.equal(36)
-    expect(orders[2].id).to.equal(29)
-    expect(orders[3].id).to.equal(31)
-    expect(orders[4].id).to.equal(30)
+    expect(orders[0].id).to.equal(4)
+    expect(orders[1].id).to.equal(5)
+    expect(orders[2].id).to.equal(7)
+    expect(orders[3].id).to.equal(6)
+    expect(orders[4].id).to.equal(8)
+
+    // the price returned has the same amount of decimals as Token1 (USDC.e in this case)
+    expect(orders[0].price).to.equal(ParseUSDC(2100))
+    expect(orders[1].price).to.equal(ParseUSDC(2300))
+    expect(orders[2].price).to.equal(ParseUSDC(1900))
+    expect(orders[3].price).to.equal(ParseUSDC(1600))
+    expect(orders[4].price).to.equal(ParseUSDC(1500))
+
+    // the amount0 returned has the same amount of decimals as Token0 (WETH in this case)
+    expect(orders[0].amount0).to.equal(ParseWETH(0.5))
+    expect(orders[1].amount0).to.equal(ParseWETH(0.3))
+    expect(orders[2].amount0).to.equal(ParseWETH(0.5))
+    expect(orders[3].amount0).to.equal(ParseWETH(0.3))
+    expect(orders[4].amount0).to.equal(ParseWETH(0.2))
   })
 
   it('can withdraw tokens', async () => {

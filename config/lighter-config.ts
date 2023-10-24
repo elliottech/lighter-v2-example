@@ -84,7 +84,7 @@ export const lighterConfigs: {
       [Token.USDC]: '0x5bdf85216ec1e38d6458c870992a69e38e03f7ef',
       [Token.aArbWETH]: '0x6286b9f080d27f860f6b4bb0226f8ef06cc9f2fc',
       [Token.aArbWBTC]: '0x91746d6f9df58b9807a5bb0e54e4ea86600c2dba',
-      [Token.aArbUSDC]: '0x3155c5a49aa31ee99ea7fbcb1258192652a8001c',
+      [Token.aArbUSDC]: '0x3a5385d8eb0d05b006edff978ba4b95c51f70b5c',
     },
     AAVEPool: '0x794a61358D6845594F94dc1DB02A252b5b4814aD',
   },
@@ -216,11 +216,7 @@ async function getChainId(): Promise<ChainId> {
   return parseInt(chainId as string)
 }
 
-export async function getLighterConfig(forceTestnet?: boolean) {
-  if (forceTestnet) {
-    return lighterConfigs[ChainId.ARBITRUM_GOERLI]
-  }
-
+export async function getLighterConfig() {
   const chainId = await getChainId()
   if (!chainId) {
     throw new Error(`ChainId ${chainId} is not supported`)

@@ -2,14 +2,22 @@ import * as IATokenABI from '@aave/core-v3/artifacts/contracts/interfaces/IAToke
 import * as AAVEPoolV3 from '@aave/core-v3/artifacts/contracts/protocol/pool/Pool.sol/Pool.json'
 import {IAToken, IPool} from '@aave/core-v3/dist/types/types'
 import {ethers} from 'hardhat'
-import {Contract} from 'ethers'
-import {getLighterConfig, LighterConfig} from '../../config'
-import {IERC20Metadata, IFactory, IOrderBook, MarginWallet, MarketMakingWallet, SwapWallet} from '../../typechain-types'
+import {BigNumber, Contract} from 'ethers'
+import {getLighterConfig, LighterConfig, Token} from '../../config'
+import {
+  IERC20,
+  IERC20Metadata,
+  IFactory,
+  IOrderBook,
+  MarginWallet,
+  MarketMakingWallet,
+  SwapWallet,
+} from '../../typechain-types'
 import * as Factory from '@elliottech/lighter-v2-core/artifacts/contracts/Factory.sol/Factory.json'
 import * as OrderBook from '@elliottech/lighter-v2-core/artifacts/contracts/OrderBook.sol/OrderBook.json'
 import {PromiseOrValue} from '../../typechain-types/common'
-import {fundAccount} from '../token'
 import {ParseUSDC, ParseWETH} from './amount'
+import {SignerWithAddress} from '@nomiclabs/hardhat-ethers/signers'
 
 export async function getAAVEPoolAt(address: string): Promise<IPool> {
   const [signer] = await ethers.getSigners()
@@ -68,8 +76,10 @@ export async function deploySwapWallet(factory: IFactory) {
 }
 
 export async function deployContracts(fundWallet = true) {
-  const config = await getLighterConfig(true)
+  const config = await getLighterConfig()
   const factory = await getFactoryAt(config.Factory)
+
+  // orderBook with id=0 is the weth<->usdc.e one on arbitrum
   const orderBook = await getOrderBookAt(factory.getOrderBookFromId(0))
   const mmWallet = await deployMarketMakingWallet(factory)
   const swapWallet = await deploySwapWallet(factory)
@@ -94,4 +104,33 @@ export async function deployContracts(fundWallet = true) {
     swapWallet,
     ...tokens,
   }
+}
+
+// Send specified amount to recipient. The funds are being send from the configured Vault address which is configured
+// ahead of time for each token, which has lots of tokens, since tokens are not necessary mintable.
+export async function fundAccount(
+  token: IERC20,
+  recipient: string | SignerWithAddress,
+  amount: BigNumber,
+  config?: LighterConfig
+) {
+  if (config == null) {
+    config = await getLighterConfig()
+  }
+
+  // get vault from token address
+  let vaultAddress = null
+  for (const s in config.Tokens) {
+    if (config.Tokens[s as Token]! == token.address) {
+      vaultAddress = config.Vault[s as Token]!
+      break
+    }
+  }
+  if (vaultAddress == null) {
+    throw `token ${token.address} is not used`
+  }
+  const vault = await ethers.getImpersonatedSigner(vaultAddress)
+
+  const recipientAddress = typeof recipient == 'string' ? recipient : recipient.address
+  return token.connect(vault).transfer(recipientAddress, amount)
 }
