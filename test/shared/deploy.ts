@@ -60,9 +60,9 @@ export async function deployTokens(config?: LighterConfig) {
   }
 }
 
-export async function deployMarginWallet(pool: IPool) {
-  const factory = await ethers.getContractFactory('MarginWallet')
-  return (await factory.deploy(pool.address)) as MarginWallet
+export async function deployMarginWallet(factory: IFactory, pool: IPool) {
+  const contractFactory = await ethers.getContractFactory('MarginWallet')
+  return (await contractFactory.deploy(factory.address, pool.address)) as MarginWallet
 }
 
 export async function deployMarketMakingWallet(factory: IFactory) {
