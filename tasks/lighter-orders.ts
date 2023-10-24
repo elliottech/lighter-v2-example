@@ -105,7 +105,7 @@ task('createOrder')
     const lighterConfig = await getLighterConfig()
     const orderBookAddress = lighterConfig.OrderBooks[orderbookname as OrderBookKey]
 
-    if(!orderBookAddress) {
+    if (!orderBookAddress) {
       throw new Error(`Invalid OrderbookAddress`)
     }
 
@@ -175,6 +175,9 @@ task('cancelOrder')
   .setAction(async ({orderbookname, id}, hre) => {
     const lighterConfig = await getLighterConfig()
     const orderBookAddress = lighterConfig.OrderBooks[orderbookname as OrderBookKey]
+    if (!orderBookAddress) {
+      throw new Error(`Invalid OrderbookAddress`)
+    }
     const orderBookConfig = await getOrderBookConfigFromAddress(orderBookAddress, hre)
 
     const txData = getCancelLimitOrderFallbackData(orderBookConfig.orderBookId, [id])

@@ -81,9 +81,8 @@ export const getAllLimitOrdersBySide = async (
   isAsk: boolean,
   limit: number
 ): Promise<Order[]> => {
-  let orderData = {}
   try {
-    orderData = await orderBookContract.getPaginatedOrders(startOrderId, isAsk, limit)
+    const orderData = await orderBookContract.getPaginatedOrders(startOrderId, isAsk, limit)
     return parseOrders(isAsk, orderData)
   } catch (error) {
     return []
@@ -91,16 +90,14 @@ export const getAllLimitOrdersBySide = async (
 }
 
 export const parseOrders = (isAsk: boolean, orderData: IOrderBook.OrderQueryItemStructOutput): Order[] => {
-  const [ids, owners, amount0s, prices] = orderData.slice(1) // Skip the first item in orderData
-
   const orders: Order[] = []
 
   //@ts-ignore
-  for (let i = 0; i < ids.length; i++) {
-    const id = BigNumber.from(ids[i].toString())
-    const owner = owners[i].toString()
-    const amount0 = BigNumber.from(amount0s[i].toString())
-    const price = BigNumber.from(prices[i].toString())
+  for (let i = 1; i < orderData.ids.length; i++) {
+    const id = BigNumber.from(orderData.ids[i].toString())
+    const owner = orderData.owners[i].toString()
+    const amount0 = BigNumber.from(orderData.amount0s[i].toString())
+    const price = BigNumber.from(orderData.prices[i].toString())
 
     if (owner !== '0x0000000000000000000000000000000000000000') {
       orders.push({id, isAsk, owner, amount0, price, orderType: OrderType.LimitOrder})

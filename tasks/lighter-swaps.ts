@@ -67,6 +67,9 @@ task('swapExactInput')
     const lighterConfig = await getLighterConfig()
     const routerContract = await getRouterAt(lighterConfig.Router, hre)
     const orderBookAddress = lighterConfig.OrderBooks[orderbookname as OrderBookKey]
+    if (!orderBookAddress) {
+      throw new Error(`Invalid OrderbookAddress`)
+    }
     const orderBookConfig = await getOrderBookConfigFromAddress(orderBookAddress, hre)
     const exactInputAmount = parseAmount(
       exactinput,
