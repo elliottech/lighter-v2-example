@@ -1,5 +1,5 @@
 import {BigNumber, BigNumberish, utils} from 'ethers'
-import {OrderBookConfig} from '../shared'
+import {OrderBookConfig} from '../sdk'
 
 export const parseAmount = (amount: BigNumberish, tokenPrecision: number): BigNumber => {
   return parseBigNumberish(amount, tokenPrecision)

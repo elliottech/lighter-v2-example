@@ -3,7 +3,7 @@ import * as AAVEPoolV3 from '@aave/core-v3/artifacts/contracts/protocol/pool/Poo
 import {IAToken, IPool} from '@aave/core-v3/dist/types/types'
 import {ethers} from 'hardhat'
 import {BigNumber, Contract} from 'ethers'
-import {getLighterConfig, LighterConfig, Token} from '../../config'
+import {getLighterConfig, LighterConfig, Token} from '../../sdk'
 import {
   IERC20,
   IERC20Metadata,

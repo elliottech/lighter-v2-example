@@ -1,7 +1,7 @@
 import {ethers} from 'hardhat'
 import {expect} from 'chai'
 import {deployTokens, ParseUSDC, getAAVEPoolAt, reset, deployMarginWallet, fundAccount} from './shared'
-import {getLighterConfig} from '../config'
+import {getLighterConfig} from '../sdk'
 
 describe('Margin wallet', async () => {
   beforeEach(async function () {

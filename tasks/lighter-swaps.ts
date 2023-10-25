@@ -1,20 +1,20 @@
 import {task} from 'hardhat/config'
 import {boolean, string} from 'hardhat/internal/core/params/argumentTypes'
-import {OrderBookKey, getLighterConfig} from '../config'
-import {
-  getRouterAt,
-  getOrderBookConfigFromAddress,
-  getAllLighterEvents,
-  getSwapExactInputSingleFallbackData,
-  getSwapExactOutputSingleFallbackData,
-  SwapExactAmountEvent,
-  LighterEventType,
-  OrderBookConfig,
-} from '../shared'
-import {parseAmount} from './utils'
-import {formatUnits} from 'ethers/lib/utils'
 import {HardhatRuntimeEnvironment} from 'hardhat/types'
 import {ContractTransaction} from 'ethers'
+import {formatUnits} from 'ethers/lib/utils'
+import {parseAmount} from './utils'
+import {
+  LighterEventType,
+  OrderBookConfig,
+  OrderBookKey,
+  SwapExactAmountEvent,
+  getAllLighterEvents,
+  getLighterConfig,
+  getOrderBookConfigFromAddress,
+  getSwapExactInputSingleFallbackData,
+  getSwapExactOutputSingleFallbackData,
+} from '../sdk'
 
 async function printSwapExactExecution(
   tx: ContractTransaction,

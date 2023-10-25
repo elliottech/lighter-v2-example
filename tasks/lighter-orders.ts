@@ -1,23 +1,24 @@
 import {task} from 'hardhat/config'
 import {boolean, int} from 'hardhat/internal/core/params/argumentTypes'
+import {HardhatRuntimeEnvironment} from 'hardhat/types'
 import {BigNumber, ContractTransaction} from 'ethers'
-import {OrderBookKey, getLighterConfig} from '../config'
+import {formatUnits} from 'ethers/lib/utils'
+import {parseToAmountBase, parseToPriceBase} from './utils'
 import {
-  getOrderBookConfigFromAddress,
-  getAllLighterEvents,
-  getCreateLimitOrderFallbackData,
-  getCancelLimitOrderFallbackData,
-  getCreateFOKOrderFallbackData,
-  getCreateIOCOrderFallbackData,
   CancelLimitOrderEvent,
-  SwapEvent,
   CreateOrderEvent,
   LighterEventType,
   OrderBookConfig,
-} from '../shared'
-import {parseToAmountBase, parseToPriceBase} from './utils'
-import {HardhatRuntimeEnvironment} from 'hardhat/types'
-import {formatUnits} from 'ethers/lib/utils'
+  OrderBookKey,
+  SwapEvent,
+  getAllLighterEvents,
+  getCancelLimitOrderFallbackData,
+  getCreateFOKOrderFallbackData,
+  getCreateIOCOrderFallbackData,
+  getCreateLimitOrderFallbackData,
+  getLighterConfig,
+  getOrderBookConfigFromAddress,
+} from '../sdk'
 
 async function printCreateOrderExecution(
   tx: ContractTransaction,

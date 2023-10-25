@@ -1,17 +1,17 @@
 import {task, types} from 'hardhat/config'
 import {BigNumber} from 'ethers'
-import {OrderBookKey, getLighterConfig} from '../config'
 import {
+  OrderBookKey,
+  OrderData,
   getAllLimitOrders,
   getAllLimitOrdersOfAnAccount,
+  getLighterConfig,
   getOrderBookAt,
   getOrderDetails,
-  OrderData,
   orderDataToString,
   orderToString,
-} from '../shared'
+} from '../sdk'
 
-// npx hardhat getOrderDetails --orderbookname WBTC-USDC --orderid 26 --network arbgoerli
 task('getOrderDetails')
   .addParam('orderbookname')
   .addParam('orderid')
@@ -30,8 +30,6 @@ task('getOrderDetails')
     }
   })
 
-// npx hardhat getAllLimitOrders --orderbookname WBTC-USDC --limit 10 --network arbgoerli
-// npx hardhat getAllLimitOrders --orderbookname WBTC-USDC --network arbgoerli
 task('getAllLimitOrders')
   .addParam('orderbookname')
   .addOptionalParam('limit', 'limit for the order-query', 100, types.int)
@@ -46,7 +44,6 @@ task('getAllLimitOrders')
     console.log(`orderData queried: ${orderDataToString(orderData)}`)
   })
 
-// npx hardhat getAllLimitOrdersOfAnAccount --orderbookname WBTC-USDC --account '0xd057E08695d1843FC21F27bBd0Af5D4B06203F48' --network arbgoerli
 task('getAllLimitOrdersOfAnAccount')
   .addParam('orderbookname')
   .addParam('account')

@@ -1,8 +1,8 @@
 import {task} from 'hardhat/config'
-import {formatUnits, parseUnits} from 'ethers/lib/utils'
 import {HardhatRuntimeEnvironment} from 'hardhat/types'
+import {formatUnits, parseUnits} from 'ethers/lib/utils'
 import {IERC20Metadata} from '../typechain-types'
-import {getLighterConfig, LighterConfig, Token} from '../config'
+import {LighterConfig, Token, getLighterConfig} from '../sdk'
 
 export async function getTokenAt(
   config: LighterConfig,

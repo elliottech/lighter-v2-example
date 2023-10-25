@@ -1,7 +1,7 @@
 import {ethers} from 'hardhat'
 import {expect} from 'chai'
 import {parseEther, parseUnits} from 'ethers/lib/utils'
-import {getLighterConfig} from '../config'
+import {getLighterConfig} from '../sdk'
 import {fundAccount, getTokenAt, reset} from './shared'
 
 describe('token', async () => {
