@@ -11,7 +11,7 @@ import {
   LighterEventType,
   OrderBookConfig,
 } from '../shared'
-import {parseAmount} from './amount'
+import {parseAmount} from './utils'
 import {formatUnits} from 'ethers/lib/utils'
 import {HardhatRuntimeEnvironment} from 'hardhat/types'
 import {ContractTransaction} from 'ethers'
@@ -63,10 +63,9 @@ task('swapExactInput')
   .setAction(async ({orderbookname, isask, exactinput, minoutput, recipient, unwrap}, hre) => {
     const [signer] = await hre.ethers.getSigners()
     const lighterConfig = await getLighterConfig()
-    const routerContract = await getRouterAt(lighterConfig.Router, hre)
     const orderBookAddress = lighterConfig.OrderBooks[orderbookname as OrderBookKey]
     if (!orderBookAddress) {
-      throw new Error(`Invalid OrderbookAddress`)
+      throw new Error(`Invalid order book '${orderbookname}'`)
     }
     const orderBookConfig = await getOrderBookConfigFromAddress(orderBookAddress, hre)
     const exactInputAmount = parseAmount(
@@ -112,8 +111,10 @@ task('swapExactOutput')
   .setAction(async ({orderbookname, isask, exactoutput, maxinput, recipient, unwrap}, hre) => {
     const [signer] = await hre.ethers.getSigners()
     const lighterConfig = await getLighterConfig()
-    const routerContract = await getRouterAt(lighterConfig.Router, hre)
-    const orderBookAddress = lighterConfig.OrderBooks[orderbookname as OrderBookKey] as string
+    const orderBookAddress = lighterConfig.OrderBooks[orderbookname as OrderBookKey]
+    if (!orderBookAddress) {
+      throw new Error(`Invalid order book '${orderbookname}'`)
+    }
     const orderBookConfig = await getOrderBookConfigFromAddress(orderBookAddress, hre)
     const exactOutputAmount = parseAmount(
       exactoutput,

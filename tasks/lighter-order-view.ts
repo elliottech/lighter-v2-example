@@ -17,7 +17,10 @@ task('getOrderDetails')
   .addParam('orderid')
   .setAction(async ({orderbookname, orderid}, hre) => {
     const lighterConfig = await getLighterConfig()
-    const orderBookAddress = lighterConfig.OrderBooks[orderbookname as OrderBookKey] as string
+    const orderBookAddress = lighterConfig.OrderBooks[orderbookname as OrderBookKey]
+    if (!orderBookAddress) {
+      throw new Error(`Invalid order book '${orderbookname}'`)
+    }
     const orderBookContract = await getOrderBookAt(orderBookAddress, hre)
     const order = await getOrderDetails(orderBookContract, BigNumber.from(orderid))
     if (!order) {
@@ -34,7 +37,10 @@ task('getAllLimitOrders')
   .addOptionalParam('limit', 'limit for the order-query', 100, types.int)
   .setAction(async ({orderbookname, limit}, hre) => {
     const lighterConfig = await getLighterConfig()
-    const orderBookAddress = lighterConfig.OrderBooks[orderbookname as OrderBookKey] as string
+    const orderBookAddress = lighterConfig.OrderBooks[orderbookname as OrderBookKey]
+    if (!orderBookAddress) {
+      throw new Error(`Invalid order book '${orderbookname}'`)
+    }
     const orderBookContract = await getOrderBookAt(orderBookAddress, hre)
     const orderData: OrderData = await getAllLimitOrders(orderBookContract, BigNumber.from(0), parseInt(limit))
     console.log(`orderData queried: ${orderDataToString(orderData)}`)
@@ -47,7 +53,10 @@ task('getAllLimitOrdersOfAnAccount')
   .addOptionalParam('limit', 'limit for the order-query', 100, types.int)
   .setAction(async ({orderbookname, account, limit}, hre) => {
     const lighterConfig = await getLighterConfig()
-    const orderBookAddress = lighterConfig.OrderBooks[orderbookname as OrderBookKey] as string
+    const orderBookAddress = lighterConfig.OrderBooks[orderbookname as OrderBookKey]
+    if (!orderBookAddress) {
+      throw new Error(`Invalid order book '${orderbookname}'`)
+    }
     const orderBookContract = await getOrderBookAt(orderBookAddress, hre)
     const orderData: OrderData = await getAllLimitOrdersOfAnAccount(
       orderBookContract,

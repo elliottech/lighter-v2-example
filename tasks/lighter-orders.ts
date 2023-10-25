@@ -15,7 +15,7 @@ import {
   LighterEventType,
   OrderBookConfig,
 } from '../shared'
-import {parseToAmountBase, parseToPriceBase} from './amount'
+import {parseToAmountBase, parseToPriceBase} from './utils'
 import {HardhatRuntimeEnvironment} from 'hardhat/types'
 import {formatUnits} from 'ethers/lib/utils'
 
@@ -92,9 +92,8 @@ task('createOrder')
   .setAction(async ({orderbookname, ordertype, amount: amountStr, price: priceStr, isask}, hre) => {
     const lighterConfig = await getLighterConfig()
     const orderBookAddress = lighterConfig.OrderBooks[orderbookname as OrderBookKey]
-
     if (!orderBookAddress) {
-      throw new Error(`Invalid OrderbookAddress`)
+      throw new Error(`Invalid order book '${orderbookname}'`)
     }
 
     const orderBookConfig = await getOrderBookConfigFromAddress(orderBookAddress, hre)
@@ -176,7 +175,7 @@ task('cancelOrder')
     const lighterConfig = await getLighterConfig()
     const orderBookAddress = lighterConfig.OrderBooks[orderbookname as OrderBookKey]
     if (!orderBookAddress) {
-      throw new Error(`Invalid OrderbookAddress`)
+      throw new Error(`Invalid order book '${orderbookname}'`)
     }
     const orderBookConfig = await getOrderBookConfigFromAddress(orderBookAddress, hre)
 
