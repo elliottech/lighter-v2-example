@@ -1,4 +1,3 @@
-import '@nomiclabs/hardhat-ethers'
 import {Provider} from '@ethersproject/providers'
 import {OrderType} from './order'
 import {BigNumber, ethers} from 'ethers'

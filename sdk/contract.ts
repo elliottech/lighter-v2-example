@@ -1,14 +1,8 @@
-import * as RouterABI from '@elliottech/lighter-v2-periphery/artifacts/contracts/Router.sol/Router.json'
 import * as OrderBookABI from '@elliottech/lighter-v2-core/artifacts/contracts/OrderBook.sol/OrderBook.json'
 import * as FactoryABI from '@elliottech/lighter-v2-core/artifacts/contracts/Factory.sol/Factory.json'
 import {HardhatRuntimeEnvironment} from 'hardhat/types'
-import {IERC20Metadata, IFactory, IOrderBook, IRouter} from '../typechain-types'
+import {IERC20Metadata, IFactory, IOrderBook} from '../typechain-types'
 import {BigNumber} from 'ethers'
-
-export const getRouterAt = async (routerAddress: string, hre: HardhatRuntimeEnvironment): Promise<IRouter> => {
-  const [signer] = await hre.ethers.getSigners()
-  return (await hre.ethers.getContractAt(RouterABI.abi, routerAddress, signer)) as any as IRouter
-}
 
 export const getOrderBookAt = async (orderBookAddress: string, hre: HardhatRuntimeEnvironment): Promise<IOrderBook> => {
   const [signer] = await hre.ethers.getSigners()
