@@ -1,29 +1,24 @@
 import {task} from 'hardhat/config'
 import {boolean, int} from 'hardhat/internal/core/params/argumentTypes'
-import {BigNumber, ContractTransaction} from 'ethers'
-import {
-  OrderBookKey,
-  getLighterConfig,
-  OrderBookConfig,
-  CreateOrderEvent,
-  SwapEvent,
-  CancelLimitOrderEvent,
-  CANCEL_LIMIT_ORDER_EVENT_NAME,
-  SWAP_EVENT_NAME,
-  CREATE_ORDER_EVENT_NAME,
-} from '../config'
-import {
-  isSuccessful,
-  parseToAmountBase,
-  parseToPriceBase,
-  getOrderBookConfigFromAddress,
-  getAllLighterEvents,
-  getCreateLimitOrderFallbackData,
-  getCancelLimitOrderFallbackData,
-} from '../shared'
-import {OrderType} from '../config'
 import {HardhatRuntimeEnvironment} from 'hardhat/types'
+import {BigNumber, ContractTransaction} from 'ethers'
 import {formatUnits} from 'ethers/lib/utils'
+import {parseToAmountBase, parseToPriceBase} from './utils'
+import {
+  CancelLimitOrderEvent,
+  CreateOrderEvent,
+  LighterEventType,
+  OrderBookConfig,
+  OrderBookKey,
+  SwapEvent,
+  getAllLighterEvents,
+  getCancelLimitOrderFallbackData,
+  getCreateFOKOrderFallbackData,
+  getCreateIOCOrderFallbackData,
+  getCreateLimitOrderFallbackData,
+  getLighterConfig,
+  getOrderBookConfigFromAddress,
+} from '../sdk'
 
 async function printCreateOrderExecution(
   tx: ContractTransaction,
@@ -31,21 +26,15 @@ async function printCreateOrderExecution(
   hre: HardhatRuntimeEnvironment
 ) {
   await tx.wait()
-  const successful = await isSuccessful(hre.ethers.provider, tx.hash)
-
-  if (!successful) {
-    console.log(`createOrder Transaction: ${tx.hash} failed`)
-    return
-  }
 
   const allEvents = await getAllLighterEvents(tx.hash, hre)
   let createOrderEvent: CreateOrderEvent | null = null
   let swapEvents: SwapEvent[] = []
   for (const event of allEvents) {
-    if (event.eventName == CREATE_ORDER_EVENT_NAME) {
+    if (event.eventName == LighterEventType.CREATE_ORDER_EVENT) {
       createOrderEvent = event as CreateOrderEvent
     }
-    if (event.eventName == SWAP_EVENT_NAME) {
+    if (event.eventName == LighterEventType.SWAP_EVENT) {
       swapEvents.push(event as SwapEvent)
     }
   }
@@ -104,9 +93,8 @@ task('createOrder')
   .setAction(async ({orderbookname, ordertype, amount: amountStr, price: priceStr, isask}, hre) => {
     const lighterConfig = await getLighterConfig()
     const orderBookAddress = lighterConfig.OrderBooks[orderbookname as OrderBookKey]
-
     if (!orderBookAddress) {
-      throw new Error(`Invalid OrderbookAddress`)
+      throw new Error(`Invalid order book '${orderbookname}'`)
     }
 
     const orderBookConfig = await getOrderBookConfigFromAddress(orderBookAddress, hre)
@@ -122,18 +110,36 @@ task('createOrder')
       throw `amount1 (${orderBookConfig.token1Symbol}) too small (increase price or amount of order)`
     }
 
-    const txData = getCreateLimitOrderFallbackData(
-      orderBookConfig.orderBookId,
-      ordertype as OrderType,
-      amountBase,
-      priceBase,
-      isask
-    )
+    let data = ''
+    if (ordertype == 0) {
+      data = getCreateLimitOrderFallbackData(orderBookConfig.orderBookId, [
+        {
+          amount0Base: amountBase,
+          priceBase: priceBase,
+          isAsk: isask,
+          hintId: 0,
+        },
+      ])
+    } else if (ordertype == 2) {
+      data = getCreateFOKOrderFallbackData(orderBookConfig.orderBookId, {
+        amount0Base: amountBase,
+        priceBase: priceBase,
+        isAsk: isask,
+      })
+    } else if (ordertype == 3) {
+      data = getCreateIOCOrderFallbackData(orderBookConfig.orderBookId, {
+        amount0Base: amountBase,
+        priceBase: priceBase,
+        isAsk: isask,
+      })
+    } else {
+      throw `invalid order type ${ordertype}`
+    }
 
     const [signer] = await hre.ethers.getSigners()
     const tx = await signer.sendTransaction({
       to: lighterConfig.Router,
-      data: txData,
+      data: data,
     })
 
     await printCreateOrderExecution(tx, orderBookConfig, hre)
@@ -145,17 +151,11 @@ async function printCancelOrderExecution(
   hre: HardhatRuntimeEnvironment
 ) {
   await tx.wait()
-  const successful = await isSuccessful(hre.ethers.provider, tx.hash)
-
-  if (!successful) {
-    console.log(`cancelorder Transaction: ${tx.hash} failed`)
-    return
-  }
 
   const allEvents = await getAllLighterEvents(tx.hash, hre)
   let cancelOrderEvent: CancelLimitOrderEvent | null = null
   for (const event of allEvents) {
-    if (event.eventName == CANCEL_LIMIT_ORDER_EVENT_NAME) {
+    if (event.eventName == LighterEventType.CANCEL_LIMIT_ORDER_EVENT) {
       cancelOrderEvent = event as CancelLimitOrderEvent
     }
   }
@@ -176,7 +176,7 @@ task('cancelOrder')
     const lighterConfig = await getLighterConfig()
     const orderBookAddress = lighterConfig.OrderBooks[orderbookname as OrderBookKey]
     if (!orderBookAddress) {
-      throw new Error(`Invalid OrderbookAddress`)
+      throw new Error(`Invalid order book '${orderbookname}'`)
     }
     const orderBookConfig = await getOrderBookConfigFromAddress(orderBookAddress, hre)
 

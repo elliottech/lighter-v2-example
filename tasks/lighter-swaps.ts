@@ -1,16 +1,20 @@
 import {task} from 'hardhat/config'
 import {boolean, string} from 'hardhat/internal/core/params/argumentTypes'
-import {
-  OrderBookKey,
-  getLighterConfig,
-  SwapExactAmountEvent,
-  OrderBookConfig,
-  SWAP_EXACT_AMOUNT_EVENT_NAME,
-} from '../config'
-import {isSuccessful, getRouterAt, parseAmount, getOrderBookConfigFromAddress, getAllLighterEvents} from '../shared'
-import {formatUnits} from 'ethers/lib/utils'
 import {HardhatRuntimeEnvironment} from 'hardhat/types'
 import {ContractTransaction} from 'ethers'
+import {formatUnits} from 'ethers/lib/utils'
+import {parseAmount} from './utils'
+import {
+  LighterEventType,
+  OrderBookConfig,
+  OrderBookKey,
+  SwapExactAmountEvent,
+  getAllLighterEvents,
+  getLighterConfig,
+  getOrderBookConfigFromAddress,
+  getSwapExactInputSingleFallbackData,
+  getSwapExactOutputSingleFallbackData,
+} from '../sdk'
 
 async function printSwapExactExecution(
   tx: ContractTransaction,
@@ -18,17 +22,11 @@ async function printSwapExactExecution(
   hre: HardhatRuntimeEnvironment
 ) {
   await tx.wait()
-  const successful = await isSuccessful(hre.ethers.provider, tx.hash)
-
-  if (!successful) {
-    console.log(`swapExact Transaction: ${tx.hash} failed`)
-    return
-  }
 
   const allEvents = await getAllLighterEvents(tx.hash, hre)
   let swapExactEvent: SwapExactAmountEvent | null = null
   for (const event of allEvents) {
-    if (event.eventName == SWAP_EXACT_AMOUNT_EVENT_NAME) {
+    if (event.eventName == LighterEventType.SWAP_EXACT_AMOUNT_EVENT) {
       swapExactEvent = event as SwapExactAmountEvent
     }
   }
@@ -65,10 +63,9 @@ task('swapExactInput')
   .setAction(async ({orderbookname, isask, exactinput, minoutput, recipient, unwrap}, hre) => {
     const [signer] = await hre.ethers.getSigners()
     const lighterConfig = await getLighterConfig()
-    const routerContract = await getRouterAt(lighterConfig.Router, hre)
     const orderBookAddress = lighterConfig.OrderBooks[orderbookname as OrderBookKey]
     if (!orderBookAddress) {
-      throw new Error(`Invalid OrderbookAddress`)
+      throw new Error(`Invalid order book '${orderbookname}'`)
     }
     const orderBookConfig = await getOrderBookConfigFromAddress(orderBookAddress, hre)
     const exactInputAmount = parseAmount(
@@ -87,15 +84,18 @@ task('swapExactInput')
       throw 'exact input is 0'
     }
 
-    // TODO: consider using fallback compression here instead of calling swapExact method directly
-    const tx = await routerContract.swapExactInputSingle(
-      orderBookConfig.orderBookId,
-      isask,
-      exactInputAmount,
-      minOutputAmount,
-      recipient,
-      unwrap
-    )
+    const tx = await signer.sendTransaction({
+      to: lighterConfig.Router,
+      data: getSwapExactInputSingleFallbackData(
+        orderBookConfig.orderBookId,
+        isask,
+        exactInputAmount,
+        minOutputAmount,
+        recipient,
+        unwrap,
+        signer.address
+      ),
+    })
 
     await printSwapExactExecution(tx, orderBookConfig, hre)
   })
@@ -111,8 +111,10 @@ task('swapExactOutput')
   .setAction(async ({orderbookname, isask, exactoutput, maxinput, recipient, unwrap}, hre) => {
     const [signer] = await hre.ethers.getSigners()
     const lighterConfig = await getLighterConfig()
-    const routerContract = await getRouterAt(lighterConfig.Router, hre)
-    const orderBookAddress = lighterConfig.OrderBooks[orderbookname as OrderBookKey] as string
+    const orderBookAddress = lighterConfig.OrderBooks[orderbookname as OrderBookKey]
+    if (!orderBookAddress) {
+      throw new Error(`Invalid order book '${orderbookname}'`)
+    }
     const orderBookConfig = await getOrderBookConfigFromAddress(orderBookAddress, hre)
     const exactOutputAmount = parseAmount(
       exactoutput,
@@ -130,14 +132,18 @@ task('swapExactOutput')
       throw 'exact output is 0'
     }
 
-    // TODO: consider using fallback compression here instead of calling swapExact method directly
-    const tx = await routerContract.swapExactOutputSingle(
-      orderBookConfig.orderBookId,
-      isask,
-      exactOutputAmount,
-      maxInputAmount,
-      recipient,
-      unwrap
-    )
+    const tx = await signer.sendTransaction({
+      to: lighterConfig.Router,
+      data: getSwapExactOutputSingleFallbackData(
+        orderBookConfig.orderBookId,
+        isask,
+        exactOutputAmount,
+        maxInputAmount,
+        recipient,
+        unwrap,
+        signer.address
+      ),
+    })
+
     await printSwapExactExecution(tx, orderBookConfig, hre)
   })

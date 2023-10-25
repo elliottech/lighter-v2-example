@@ -2,7 +2,7 @@ import {ethers} from 'hardhat'
 import {BigNumber} from 'ethers'
 import {expect} from 'chai'
 import {deployTokens, fundAccount, getAAVEPoolAt, getATokenAt, ParseUSDC, ParseWETH, reset} from './shared'
-import {getLighterConfig} from '../config'
+import {getLighterConfig} from '../sdk'
 
 export const AAVEStableRate = BigNumber.from(1)
 export const AAVEVariableRate = BigNumber.from(2)
