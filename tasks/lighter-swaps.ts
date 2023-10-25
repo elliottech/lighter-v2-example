@@ -7,7 +7,15 @@ import {
   OrderBookConfig,
   SWAP_EXACT_AMOUNT_EVENT_NAME,
 } from '../config'
-import {isSuccessful, getRouterAt, parseAmount, getOrderBookConfigFromAddress, getAllLighterEvents} from '../shared'
+import {
+  isSuccessful,
+  getRouterAt,
+  getOrderBookConfigFromAddress,
+  getAllLighterEvents,
+  getSwapExactInputSingleFallbackData,
+  getSwapExactOutputSingleFallbackData,
+} from '../shared'
+import {parseAmount} from './amount'
 import {formatUnits} from 'ethers/lib/utils'
 import {HardhatRuntimeEnvironment} from 'hardhat/types'
 import {ContractTransaction} from 'ethers'
@@ -87,15 +95,18 @@ task('swapExactInput')
       throw 'exact input is 0'
     }
 
-    // TODO: consider using fallback compression here instead of calling swapExact method directly
-    const tx = await routerContract.swapExactInputSingle(
-      orderBookConfig.orderBookId,
-      isask,
-      exactInputAmount,
-      minOutputAmount,
-      recipient,
-      unwrap
-    )
+    const tx = await signer.sendTransaction({
+      to: lighterConfig.Router,
+      data: getSwapExactInputSingleFallbackData(
+        orderBookConfig.orderBookId,
+        isask,
+        exactInputAmount,
+        minOutputAmount,
+        recipient,
+        unwrap,
+        signer.address
+      ),
+    })
 
     await printSwapExactExecution(tx, orderBookConfig, hre)
   })
@@ -130,14 +141,18 @@ task('swapExactOutput')
       throw 'exact output is 0'
     }
 
-    // TODO: consider using fallback compression here instead of calling swapExact method directly
-    const tx = await routerContract.swapExactOutputSingle(
-      orderBookConfig.orderBookId,
-      isask,
-      exactOutputAmount,
-      maxInputAmount,
-      recipient,
-      unwrap
-    )
+    const tx = await signer.sendTransaction({
+      to: lighterConfig.Router,
+      data: getSwapExactOutputSingleFallbackData(
+        orderBookConfig.orderBookId,
+        isask,
+        exactOutputAmount,
+        maxInputAmount,
+        recipient,
+        unwrap,
+        signer.address
+      ),
+    })
+
     await printSwapExactExecution(tx, orderBookConfig, hre)
   })

@@ -14,14 +14,14 @@ import {
 } from '../config'
 import {
   isSuccessful,
-  parseToAmountBase,
-  parseToPriceBase,
   getOrderBookConfigFromAddress,
   getAllLighterEvents,
   getCreateLimitOrderFallbackData,
   getCancelLimitOrderFallbackData,
+  getCreateFOKOrderFallbackData,
+  getCreateIOCOrderFallbackData,
 } from '../shared'
-import {OrderType} from '../config'
+import {parseToAmountBase, parseToPriceBase} from './amount'
 import {HardhatRuntimeEnvironment} from 'hardhat/types'
 import {formatUnits} from 'ethers/lib/utils'
 
@@ -122,18 +122,36 @@ task('createOrder')
       throw `amount1 (${orderBookConfig.token1Symbol}) too small (increase price or amount of order)`
     }
 
-    const txData = getCreateLimitOrderFallbackData(
-      orderBookConfig.orderBookId,
-      ordertype as OrderType,
-      amountBase,
-      priceBase,
-      isask
-    )
+    let data = ''
+    if (ordertype == 0) {
+      data = getCreateLimitOrderFallbackData(orderBookConfig.orderBookId, [
+        {
+          amount0Base: amountBase,
+          priceBase: priceBase,
+          isAsk: isask,
+          hintId: 0,
+        },
+      ])
+    } else if (ordertype == 2) {
+      data = getCreateFOKOrderFallbackData(orderBookConfig.orderBookId, {
+        amount0Base: amountBase,
+        priceBase: priceBase,
+        isAsk: isask,
+      })
+    } else if (ordertype == 3) {
+      data = getCreateIOCOrderFallbackData(orderBookConfig.orderBookId, {
+        amount0Base: amountBase,
+        priceBase: priceBase,
+        isAsk: isask,
+      })
+    } else {
+      throw `invalid order type ${ordertype}`
+    }
 
     const [signer] = await hre.ethers.getSigners()
     const tx = await signer.sendTransaction({
       to: lighterConfig.Router,
-      data: txData,
+      data: data,
     })
 
     await printCreateOrderExecution(tx, orderBookConfig, hre)
