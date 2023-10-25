@@ -1,6 +1,61 @@
 import {BigNumber} from 'ethers'
-import {Order, OrderData, OrderType} from '../config'
 import {IOrderBook} from '../typechain-types'
+
+export enum OrderType {
+  LimitOrder,
+  PerformanceLimitOrder,
+  FoKOrder,
+  IoCOrder,
+}
+
+export interface Order {
+  id: BigNumber
+  isAsk: boolean
+  owner: string
+  amount0: BigNumber
+  price: BigNumber
+  orderType: OrderType
+}
+
+export interface OrderData {
+  limit: number
+  orderCount: number
+  askOrderCount: number
+  bidOrderCount: number
+  askOrders: Order[]
+  bidOrders: Order[]
+}
+
+// Define a custom toString function for the Order interface
+export const orderToString = (order: Order): string => {
+  return `Order Details:
+  ID: ${order.id.toString()}
+  Is Ask: ${order.isAsk ? 'Yes' : 'No'}
+  Owner: ${order.owner}
+  Amount0: ${order.amount0.toString()}
+  Price: ${order.price.toString()}
+  Order Type: ${order.orderType}`
+}
+
+// Define a custom toString function for the OrderData interface
+export const orderDataToString = (orderData: OrderData): string => {
+  const {limit, orderCount, askOrderCount, bidOrderCount, askOrders, bidOrders} = orderData
+
+  const askOrdersString = askOrders.map((order) => orderToString(order)).join('\n\n')
+  const bidOrdersString = bidOrders.map((order) => orderToString(order)).join('\n\n')
+
+  return `\n Order Data: \n
+  Limit: ${limit}
+  Total Order Count: ${orderCount}
+  Ask Order Count: ${askOrderCount}
+  Bid Order Count: ${bidOrderCount}
+
+  Ask Orders:\n
+  ${askOrdersString}
+
+  Bid Orders:\n
+  ${bidOrdersString}`
+}
 
 export const getAllLimitOrdersOfAnAccount = async (
   orderBookContract: IOrderBook,

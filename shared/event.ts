@@ -1,27 +1,106 @@
 import '@nomiclabs/hardhat-ethers'
 import {Provider} from '@ethersproject/providers'
-import {getOrderTypeFromValue, getTransactionReceipt} from '../shared'
+import {OrderType} from './order'
 import {BigNumber, ethers} from 'ethers'
-import {
-  CreateOrderEvent,
-  CancelLimitOrderEvent,
-  SwapEvent,
-  FlashLoanEvent,
-  SwapExactAmountEvent,
-  ClaimableBalanceIncreaseEvent,
-  ClaimableBalanceDecreaseEvent,
-  lighterEventSignatures,
-  LighterEvent,
-  CREATE_ORDER_EVENT_NAME,
-  CLAIMABLE_BALANCE_INCREASE_EVENT,
-  CANCEL_LIMIT_ORDER_EVENT_NAME,
-  CLAIMABLE_BALANCE_DECREASE_EVENT,
-  FLASH_LOAN_EVENT_NAME,
-  SWAP_EVENT_NAME,
-  SWAP_EXACT_AMOUNT_EVENT_NAME,
-  LighterEventSignature,
-} from '../config'
 import {EventFragment} from '@ethersproject/abi'
+
+export enum LighterEventType {
+  CREATE_ORDER_EVENT = 'CreateOrder',
+  CANCEL_LIMIT_ORDER_EVENT = 'CancelLimitOrder',
+  SWAP_EVENT = 'Swap',
+  SWAP_EXACT_AMOUNT_EVENT = 'SwapExactAmount',
+  FLASH_LOAN_EVENT = 'FlashLoan',
+  CLAIMABLE_BALANCE_INCREASE_EVENT = 'ClaimableBalanceIncrease',
+  CLAIMABLE_BALANCE_DECREASE_EVENT = 'ClaimableBalanceDecrease',
+}
+
+export const allLighterEvents: LighterEventType[] = [
+  LighterEventType.CREATE_ORDER_EVENT,
+  LighterEventType.CANCEL_LIMIT_ORDER_EVENT,
+  LighterEventType.SWAP_EVENT,
+  LighterEventType.SWAP_EXACT_AMOUNT_EVENT,
+  LighterEventType.FLASH_LOAN_EVENT,
+  LighterEventType.CLAIMABLE_BALANCE_DECREASE_EVENT,
+  LighterEventType.CLAIMABLE_BALANCE_INCREASE_EVENT,
+]
+
+export const lighterEventSignatures: Record<LighterEventType, string> = {
+  [LighterEventType.CREATE_ORDER_EVENT]: 'CreateOrder(address,uint32,uint64,uint64,bool,uint8)',
+  [LighterEventType.CANCEL_LIMIT_ORDER_EVENT]: 'CancelLimitOrder(uint32)',
+  [LighterEventType.SWAP_EVENT]: 'Swap(uint32,uint32,address,address,uint256,uint256)',
+  [LighterEventType.SWAP_EXACT_AMOUNT_EVENT]: 'SwapExactAmount(address,address,bool,bool,uint256,uint256)',
+  [LighterEventType.FLASH_LOAN_EVENT]: 'FlashLoan(address,address,uint256,uint256)',
+  [LighterEventType.CLAIMABLE_BALANCE_INCREASE_EVENT]: 'ClaimableBalanceIncrease(address,uint256,bool)',
+  [LighterEventType.CLAIMABLE_BALANCE_DECREASE_EVENT]: 'ClaimableBalanceDecrease(address,uint256,bool)',
+}
+
+export interface CreateOrderEvent {
+  eventName: string
+  owner: string
+  id: BigNumber
+  amount0Base: BigNumber
+  priceBase: BigNumber
+  isAsk: boolean
+  orderType: OrderType
+}
+
+export interface SwapEvent {
+  eventName: string
+  askId: BigNumber
+  bidId: BigNumber
+  askOwner: string
+  bidOwner: string
+  amount0: BigNumber
+  amount1: BigNumber
+}
+
+export interface CancelLimitOrderEvent {
+  eventName: string
+  id: BigNumber
+}
+
+export interface SwapExactAmountEvent {
+  eventName: string
+  sender: string
+  recipient: string
+  isExactInput: boolean
+  isAsk: boolean
+  swapAmount0: BigNumber
+  swapAmount1: BigNumber
+}
+
+export interface FlashLoanEvent {
+  eventName: string
+  sender: string
+  recipient: string
+  amount0: BigNumber
+  amount1: BigNumber
+}
+
+export interface ClaimableBalanceIncreaseEvent {
+  eventName: string
+  owner: string
+  amountDelta: BigNumber
+  isToken0: boolean
+}
+
+export interface ClaimableBalanceDecreaseEvent {
+  eventName: string
+  owner: string
+  amountDelta: BigNumber
+  isToken0: boolean
+}
+
+export type LighterEvent =
+  | CreateOrderEvent
+  | CancelLimitOrderEvent
+  | SwapEvent
+  | SwapExactAmountEvent
+  | FlashLoanEvent
+  | ClaimableBalanceIncreaseEvent
+  | ClaimableBalanceDecreaseEvent
+
+// === Parse Events from transaction ===
 
 export const getAllLighterEvents = async (transactionHash: string, hre: any): Promise<LighterEvent[]> => {
   if (!transactionHash) {
@@ -34,25 +113,23 @@ export const getAllLighterEvents = async (transactionHash: string, hre: any): Pr
   }
 
   // fetch receipt & all logs
-  const txReceipt = await getTransactionReceipt(provider, transactionHash)
+  const txReceipt = await provider.getTransactionReceipt(transactionHash)
   if (!txReceipt) {
-    throw new Error(`Invalid transactionReceipt for hash: ${transactionHash}`)
+    throw new Error(`Invalid transactionReceipt; hash: ${transactionHash}`)
   }
-  if (!txReceipt.logs) {
-    console.log(`transactionReceipt has invalid or empty logs`)
+  if (txReceipt.status === 0) {
+    throw new Error(`Transaction failed; hash: ${transactionHash}`)
   }
-
-  let events: LighterEventSignature[] = []
-  for (const event in lighterEventSignatures) {
-    events.push(lighterEventSignatures[event])
+  if (txReceipt.status !== 1) {
+    throw new Error(`Unknown transaction status ${txReceipt.status}; hash: ${transactionHash}`)
   }
 
   let fragments: EventFragment[] = []
   // avoid typescript error triggered the first time the project is compiled by requiring here instead of having a global import
   const IOrderBook__factory = require('../typechain-types').IOrderBook__factory
   const obInterface = IOrderBook__factory.createInterface()
-  for (const event of events) {
-    fragments.push(obInterface.events[event.eventSignature as keyof typeof obInterface.events])
+  for (const event of allLighterEvents) {
+    fragments.push(obInterface.events[lighterEventSignatures[event] as keyof typeof obInterface.events])
   }
 
   // Define the event interface with the full event structure
@@ -61,29 +138,30 @@ export const getAllLighterEvents = async (transactionHash: string, hre: any): Pr
   // Filter the logs for the event
   return txReceipt.logs
     .map((log) => {
-      for (const event of events) {
-        if (log.topics[0] == eventInterface.getEventTopic(event.eventName)) {
-          return event.parseEventFunction(eventInterface.parseLog(log))
+      for (const event of allLighterEvents) {
+        if (log.topics[0] == eventInterface.getEventTopic(event)) {
+          const parser = eventsParser[event]
+          return parser(eventInterface.parseLog(log))
         }
       }
       return null
     })
-    .filter((log) => log != null)
+    .filter((log): log is LighterEvent => log != null)
 }
 
-export const parseCreateOrderEventData = (eventData: ethers.utils.LogDescription): CreateOrderEvent => {
+function parseCreateOrderEventData(eventData: ethers.utils.LogDescription): CreateOrderEvent {
   if (!eventData || !eventData.args || eventData.args.length != 6) {
     throw new Error(`Invalid eventData`)
   }
 
   return {
-    eventName: 'CreateOrderEvent',
+    eventName: LighterEventType.CREATE_ORDER_EVENT,
     owner: eventData.args[0].toString(),
     id: BigNumber.from(eventData.args[1].toString()),
     amount0Base: BigNumber.from(eventData.args[2].toString()),
     priceBase: BigNumber.from(eventData.args[3].toString()),
     isAsk: eventData.args[4].toString().toLowerCase() === 'true',
-    orderType: getOrderTypeFromValue(parseInt(eventData.args[5])),
+    orderType: parseInt(eventData.args[5]) as OrderType,
   }
 }
 
@@ -93,7 +171,7 @@ function parseCancelLimitOrderEventData(eventData: ethers.utils.LogDescription):
   }
 
   return {
-    eventName: 'CancelLimitOrderEvent',
+    eventName: LighterEventType.CANCEL_LIMIT_ORDER_EVENT,
     id: BigNumber.from(eventData.args[0].toString()),
   }
 }
@@ -104,7 +182,7 @@ function parseSwapEventData(eventData: ethers.utils.LogDescription): SwapEvent {
   }
 
   return {
-    eventName: 'SwapEvent',
+    eventName: LighterEventType.SWAP_EVENT,
     askId: BigNumber.from(eventData.args[0].toString()),
     bidId: BigNumber.from(eventData.args[1].toString()),
     askOwner: eventData.args[2].toString(),
@@ -114,9 +192,9 @@ function parseSwapEventData(eventData: ethers.utils.LogDescription): SwapEvent {
   }
 }
 
-export const parseSwapExactAmountEventData = (eventData: ethers.utils.LogDescription): SwapExactAmountEvent => {
+function parseSwapExactAmountEventData(eventData: ethers.utils.LogDescription): SwapExactAmountEvent {
   return {
-    eventName: 'SwapExactAmountEvent',
+    eventName: LighterEventType.SWAP_EXACT_AMOUNT_EVENT,
     sender: eventData.args[0].toString(),
     recipient: eventData.args[1].toString(),
     isExactInput: eventData.args[2].toString().toLowerCase() === 'true',
@@ -126,13 +204,13 @@ export const parseSwapExactAmountEventData = (eventData: ethers.utils.LogDescrip
   }
 }
 
-export const parseFlashLoanEventData = (eventData: ethers.utils.LogDescription): FlashLoanEvent => {
+function parseFlashLoanEventData(eventData: ethers.utils.LogDescription): FlashLoanEvent {
   if (!eventData || !eventData.args || eventData.args.length != 4) {
     throw new Error(`Invalid eventData`)
   }
 
   return {
-    eventName: 'FlashLoanEvent',
+    eventName: LighterEventType.FLASH_LOAN_EVENT,
     sender: eventData.args[0].toString(),
     recipient: eventData.args[1].toString(),
     amount0: BigNumber.from(eventData.args[2]),
@@ -140,77 +218,46 @@ export const parseFlashLoanEventData = (eventData: ethers.utils.LogDescription):
   }
 }
 
-export const parseClaimableBalanceIncreaseEventData = (
-  eventData: ethers.utils.LogDescription
-): ClaimableBalanceIncreaseEvent => {
+function parseClaimableBalanceIncreaseEventData(eventData: ethers.utils.LogDescription): ClaimableBalanceIncreaseEvent {
   if (!eventData || !eventData.args || eventData.args.length != 3) {
     throw new Error(`Invalid eventData`)
   }
 
   return {
-    eventName: 'ClaimableBalanceIncreaseEvent',
+    eventName: LighterEventType.CLAIMABLE_BALANCE_INCREASE_EVENT,
     owner: eventData.args[0].toString(),
     amountDelta: BigNumber.from(eventData.args[1].toString()),
     isToken0: eventData.args[2].toString().toLowerCase() === 'true',
   }
 }
 
-export const parseClaimableBalanceDecreaseEventData = (
-  eventData: ethers.utils.LogDescription
-): ClaimableBalanceDecreaseEvent => {
+function parseClaimableBalanceDecreaseEventData(eventData: ethers.utils.LogDescription): ClaimableBalanceDecreaseEvent {
   if (!eventData || !eventData.args || eventData.args.length != 3) {
     throw new Error(`Invalid eventData`)
   }
 
   return {
-    eventName: 'ClaimableBalanceDecreaseEvent',
+    eventName: LighterEventType.CLAIMABLE_BALANCE_DECREASE_EVENT,
     owner: eventData.args[0].toString(),
     amountDelta: BigNumber.from(eventData.args[1].toString()),
     isToken0: eventData.args[2].toString().toLowerCase() === 'true',
   }
 }
 
-// Define the parsing functions in the parseFunctions object
-export const ParseEventFunctions = {
-  parseCreateOrderEventData,
-  parseCancelLimitOrderEventData,
-  parseSwapEventData,
-  parseSwapExactAmountEventData,
-  parseFlashLoanEventData,
-  parseClaimableBalanceIncreaseEventData,
-  parseClaimableBalanceDecreaseEventData,
+const eventsParser: Record<LighterEventType, (eventData: ethers.utils.LogDescription) => LighterEvent> = {
+  [LighterEventType.CREATE_ORDER_EVENT]: parseCreateOrderEventData,
+  [LighterEventType.CANCEL_LIMIT_ORDER_EVENT]: parseCancelLimitOrderEventData,
+  [LighterEventType.SWAP_EVENT]: parseSwapEventData,
+  [LighterEventType.SWAP_EXACT_AMOUNT_EVENT]: parseSwapExactAmountEventData,
+  [LighterEventType.FLASH_LOAN_EVENT]: parseFlashLoanEventData,
+  [LighterEventType.CLAIMABLE_BALANCE_INCREASE_EVENT]: parseClaimableBalanceIncreaseEventData,
+  [LighterEventType.CLAIMABLE_BALANCE_DECREASE_EVENT]: parseClaimableBalanceDecreaseEventData,
 }
 
-export const printLighterEvents = (lighterEvent: LighterEvent): string => {
-  switch (lighterEvent.eventName) {
-    case CREATE_ORDER_EVENT_NAME:
-      return createOrderEventToString(lighterEvent as CreateOrderEvent)
+// === Event to string ===
 
-    case CANCEL_LIMIT_ORDER_EVENT_NAME:
-      return cancelLimitOrderEventToString(lighterEvent as CancelLimitOrderEvent)
-
-    case SWAP_EVENT_NAME:
-      return swapEventToString(lighterEvent as SwapEvent)
-
-    case SWAP_EXACT_AMOUNT_EVENT_NAME:
-      return swapExactAmountEventToString(lighterEvent as SwapExactAmountEvent)
-
-    case FLASH_LOAN_EVENT_NAME:
-      return flashLoanEventToString(lighterEvent as FlashLoanEvent)
-
-    case CLAIMABLE_BALANCE_INCREASE_EVENT:
-      return claimableBalanceIncreaseEventToString(lighterEvent as ClaimableBalanceIncreaseEvent)
-
-    case CLAIMABLE_BALANCE_DECREASE_EVENT:
-      return claimableBalanceDecreaseEventToString(lighterEvent as ClaimableBalanceDecreaseEvent)
-
-    default:
-      return ''
-  }
-}
-
-// Implement a utility function to convert BigNumber properties to strings
-function createOrderEventToString(event: CreateOrderEvent): string {
+function createOrderEventToString(e: LighterEvent): string {
+  const event = e as CreateOrderEvent
   return `\n{
     eventName: ${event.eventName},
     owner: ${event.owner},
@@ -222,15 +269,16 @@ function createOrderEventToString(event: CreateOrderEvent): string {
   }\n`
 }
 
-// Implement custom toString functions for each event type
-function cancelLimitOrderEventToString(event: CancelLimitOrderEvent): string {
+function cancelLimitOrderEventToString(e: LighterEvent): string {
+  const event = e as CancelLimitOrderEvent
   return `\n{
     eventName: ${event.eventName},
     id: ${event.id.toString()}
   }\n`
 }
 
-function swapEventToString(event: SwapEvent): string {
+function swapEventToString(e: LighterEvent): string {
+  const event = e as SwapEvent
   return `\n{
     eventName: ${event.eventName},
     askId: ${event.askId.toString()},
@@ -242,7 +290,8 @@ function swapEventToString(event: SwapEvent): string {
   }\n`
 }
 
-function swapExactAmountEventToString(event: SwapExactAmountEvent): string {
+function swapExactAmountEventToString(e: LighterEvent): string {
+  const event = e as SwapExactAmountEvent
   return `\n{
     eventName: ${event.eventName},
     sender: ${event.sender},
@@ -254,8 +303,8 @@ function swapExactAmountEventToString(event: SwapExactAmountEvent): string {
   }\n`
 }
 
-// Implement custom toString functions for each event type
-function flashLoanEventToString(event: FlashLoanEvent): string {
+function flashLoanEventToString(e: LighterEvent): string {
+  const event = e as FlashLoanEvent
   return `\n{
     eventName: ${event.eventName},
     sender: ${event.sender},
@@ -265,7 +314,8 @@ function flashLoanEventToString(event: FlashLoanEvent): string {
   }\n`
 }
 
-function claimableBalanceIncreaseEventToString(event: ClaimableBalanceIncreaseEvent): string {
+function claimableBalanceIncreaseEventToString(e: LighterEvent): string {
+  const event = e as ClaimableBalanceIncreaseEvent
   return `\n{
     eventName: ${event.eventName},
     owner: ${event.owner},
@@ -274,11 +324,30 @@ function claimableBalanceIncreaseEventToString(event: ClaimableBalanceIncreaseEv
   }\n`
 }
 
-function claimableBalanceDecreaseEventToString(event: ClaimableBalanceDecreaseEvent): string {
+function claimableBalanceDecreaseEventToString(e: LighterEvent): string {
+  const event = e as ClaimableBalanceDecreaseEvent
   return `\n{
     eventName: ${event.eventName},
     owner: ${event.owner},
     amountDelta: ${event.amountDelta.toString()},
     isToken0: ${event.isToken0}
   }\n`
+}
+
+export function lighterEventToString(event: LighterEvent): string {
+  const handler = eventsToString[event.eventName as LighterEventType]
+  if (!handler) {
+    return ''
+  }
+  return handler(event)
+}
+
+const eventsToString: Record<LighterEventType, (event: LighterEvent) => string> = {
+  [LighterEventType.CREATE_ORDER_EVENT]: createOrderEventToString,
+  [LighterEventType.CANCEL_LIMIT_ORDER_EVENT]: cancelLimitOrderEventToString,
+  [LighterEventType.SWAP_EVENT]: swapEventToString,
+  [LighterEventType.SWAP_EXACT_AMOUNT_EVENT]: swapExactAmountEventToString,
+  [LighterEventType.FLASH_LOAN_EVENT]: flashLoanEventToString,
+  [LighterEventType.CLAIMABLE_BALANCE_INCREASE_EVENT]: claimableBalanceIncreaseEventToString,
+  [LighterEventType.CLAIMABLE_BALANCE_DECREASE_EVENT]: claimableBalanceDecreaseEventToString,
 }

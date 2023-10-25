@@ -1,25 +1,19 @@
 import {task} from 'hardhat/config'
 import {boolean, int} from 'hardhat/internal/core/params/argumentTypes'
 import {BigNumber, ContractTransaction} from 'ethers'
+import {OrderBookKey, getLighterConfig} from '../config'
 import {
-  OrderBookKey,
-  getLighterConfig,
-  OrderBookConfig,
-  CreateOrderEvent,
-  SwapEvent,
-  CancelLimitOrderEvent,
-  CANCEL_LIMIT_ORDER_EVENT_NAME,
-  SWAP_EVENT_NAME,
-  CREATE_ORDER_EVENT_NAME,
-} from '../config'
-import {
-  isSuccessful,
   getOrderBookConfigFromAddress,
   getAllLighterEvents,
   getCreateLimitOrderFallbackData,
   getCancelLimitOrderFallbackData,
   getCreateFOKOrderFallbackData,
   getCreateIOCOrderFallbackData,
+  CancelLimitOrderEvent,
+  SwapEvent,
+  CreateOrderEvent,
+  LighterEventType,
+  OrderBookConfig,
 } from '../shared'
 import {parseToAmountBase, parseToPriceBase} from './amount'
 import {HardhatRuntimeEnvironment} from 'hardhat/types'
@@ -31,21 +25,15 @@ async function printCreateOrderExecution(
   hre: HardhatRuntimeEnvironment
 ) {
   await tx.wait()
-  const successful = await isSuccessful(hre.ethers.provider, tx.hash)
-
-  if (!successful) {
-    console.log(`createOrder Transaction: ${tx.hash} failed`)
-    return
-  }
 
   const allEvents = await getAllLighterEvents(tx.hash, hre)
   let createOrderEvent: CreateOrderEvent | null = null
   let swapEvents: SwapEvent[] = []
   for (const event of allEvents) {
-    if (event.eventName == CREATE_ORDER_EVENT_NAME) {
+    if (event.eventName == LighterEventType.CREATE_ORDER_EVENT) {
       createOrderEvent = event as CreateOrderEvent
     }
-    if (event.eventName == SWAP_EVENT_NAME) {
+    if (event.eventName == LighterEventType.SWAP_EVENT) {
       swapEvents.push(event as SwapEvent)
     }
   }
@@ -163,17 +151,11 @@ async function printCancelOrderExecution(
   hre: HardhatRuntimeEnvironment
 ) {
   await tx.wait()
-  const successful = await isSuccessful(hre.ethers.provider, tx.hash)
-
-  if (!successful) {
-    console.log(`cancelorder Transaction: ${tx.hash} failed`)
-    return
-  }
 
   const allEvents = await getAllLighterEvents(tx.hash, hre)
   let cancelOrderEvent: CancelLimitOrderEvent | null = null
   for (const event of allEvents) {
-    if (event.eventName == CANCEL_LIMIT_ORDER_EVENT_NAME) {
+    if (event.eventName == LighterEventType.CANCEL_LIMIT_ORDER_EVENT) {
       cancelOrderEvent = event as CancelLimitOrderEvent
     }
   }

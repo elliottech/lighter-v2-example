@@ -2,16 +2,8 @@ import * as RouterABI from '@elliottech/lighter-v2-periphery/artifacts/contracts
 import * as OrderBookABI from '@elliottech/lighter-v2-core/artifacts/contracts/OrderBook.sol/OrderBook.json'
 import * as FactoryABI from '@elliottech/lighter-v2-core/artifacts/contracts/Factory.sol/Factory.json'
 import {HardhatRuntimeEnvironment} from 'hardhat/types'
-import {IERC20Metadata, IOrderBook, IRouter, IFactory} from '../typechain-types'
-import {OrderBookConfig, OrderType} from '../config'
+import {IERC20Metadata, IFactory, IOrderBook, IRouter} from '../typechain-types'
 import {BigNumber} from 'ethers'
-
-// Function to get enum value from a number
-export const getOrderTypeFromValue = (value: number): OrderType => {
-  const orderTypes = Object.values(OrderType)
-  const enumValue = orderTypes.find((enumItem) => typeof enumItem === 'number' && enumItem === value)
-  return enumValue as OrderType
-}
 
 export const getRouterAt = async (routerAddress: string, hre: HardhatRuntimeEnvironment): Promise<IRouter> => {
   const [signer] = await hre.ethers.getSigners()
@@ -33,6 +25,26 @@ export const getFactoryAt = async (factoryAddress: string, hre: HardhatRuntimeEn
   return (await hre.ethers.getContractAt(FactoryABI.abi, factoryAddress)) as any as IFactory
 }
 
+export interface OrderBookConfig {
+  orderBookAddress: string
+  orderBookId: BigNumber
+  nextOrderId: BigNumber
+  sizeTick: BigNumber
+  priceTick: BigNumber
+  priceMultiplier: BigNumber
+  priceDivider: BigNumber
+  minToken0BaseAmount: BigNumber
+  minToken1BaseAmount: BigNumber
+  token0Address: string
+  token0Symbol: string
+  token0Name: string
+  token0Precision: number
+  token1Address: string
+  token1Symbol: string
+  token1Name: string
+  token1Precision: number
+}
+
 export const getOrderBookConfigFromAddress = async (
   orderBookAddress: string,
   hre: HardhatRuntimeEnvironment
@@ -42,15 +54,7 @@ export const getOrderBookConfigFromAddress = async (
   const token0Contract = await getTokenAt(token0, hre)
   const token1 = await orderBookContract.token1()
   const token1Contract = await getTokenAt(token1, hre)
-  return await getOrderBookConfig(orderBookContract, token0Contract, token1Contract)
-}
 
-export const getOrderBookConfig = async (
-  orderBookContract: IOrderBook,
-  token0Contract: IERC20Metadata,
-  token1Contract: IERC20Metadata
-): Promise<OrderBookConfig> => {
-  const orderBookAddress = orderBookContract.address
   const orderBookId = await orderBookContract.orderBookId()
   const orderIdCounter = await orderBookContract.orderIdCounter()
   const sizeTick = await orderBookContract.sizeTick()

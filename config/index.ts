@@ -1,2 +1,2 @@
-export * from './lighter-config'
+export * from './lighterConfig'
 export * from './types'

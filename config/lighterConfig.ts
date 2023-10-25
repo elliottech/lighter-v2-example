@@ -1,30 +1,4 @@
-import {ParseEventFunctions} from '../shared'
-import {
-  ChainId,
-  LighterConfig,
-  LighterContracts,
-  LighterEventSignature,
-  LighterEventType,
-  OrderBookKey,
-  OrderType,
-  Token,
-} from './types'
-
-// Function to get the string representation of an enum value
-export const getOrderTypeString = (value: OrderType): string => {
-  switch (value) {
-    case OrderType.LimitOrder:
-      return 'LimitOrder'
-    case OrderType.FoKOrder:
-      return 'FoKOrder'
-    case OrderType.IoCOrder:
-      return 'IoCOrder'
-    case OrderType.PerformanceLimitOrder:
-      return 'PerformanceLimitOrder'
-    default:
-      throw new Error('Invalid enum value')
-  }
-}
+import {ChainId, LighterConfig, OrderBookKey, Token} from './types'
 
 export const lighterConfigs: {
   [ChainId: string]: LighterConfig
@@ -141,64 +115,14 @@ export const lighterConfigs: {
   },
 }
 
-export const lighterEventSignatures: {
-  [LighterEventType: string]: LighterEventSignature
-} = {
-  [LighterEventType.CREATE_ORDER_EVENT]: {
-    contractName: LighterContracts.ORDERBOOK,
-    eventSignature: 'CreateOrder(address,uint32,uint64,uint64,bool,uint8)',
-    eventName: 'CreateOrder',
-    parseEventFunction: ParseEventFunctions.parseCreateOrderEventData,
-  },
-  [LighterEventType.CANCEL_LIMIT_ORDER_EVENT]: {
-    contractName: LighterContracts.ORDERBOOK,
-    eventSignature: 'CancelLimitOrder(uint32)',
-    eventName: 'CancelLimitOrder',
-    parseEventFunction: ParseEventFunctions.parseCancelLimitOrderEventData,
-  },
-  [LighterEventType.SWAP_EVENT]: {
-    contractName: LighterContracts.ORDERBOOK,
-    eventSignature: 'Swap(uint32,uint32,address,address,uint256,uint256)',
-    eventName: 'Swap',
-    parseEventFunction: ParseEventFunctions.parseSwapEventData,
-  },
-  [LighterEventType.SWAP_EXACT_AMOUNT_EVENT]: {
-    contractName: LighterContracts.ORDERBOOK,
-    eventSignature: 'SwapExactAmount(address,address,bool,bool,uint256,uint256)',
-    eventName: 'SwapExactAmount',
-    parseEventFunction: ParseEventFunctions.parseSwapExactAmountEventData,
-  },
-  [LighterEventType.FLASH_LOAN_EVENT]: {
-    contractName: LighterContracts.ORDERBOOK,
-    eventSignature: 'FlashLoan(address,address,uint256,uint256)',
-    eventName: 'FlashLoan',
-    parseEventFunction: ParseEventFunctions.parseFlashLoanEventData,
-  },
-  [LighterEventType.CLAIMABLE_BALANCE_INCREASE_EVENT]: {
-    contractName: LighterContracts.ORDERBOOK,
-    eventSignature: 'ClaimableBalanceIncrease(address,uint256,bool)',
-    eventName: 'ClaimableBalanceIncrease',
-    parseEventFunction: ParseEventFunctions.parseClaimableBalanceIncreaseEventData,
-  },
-  [LighterEventType.CLAIMABLE_BALANCE_DECREASE_EVENT]: {
-    contractName: LighterContracts.ORDERBOOK,
-    eventSignature: 'ClaimableBalanceDecrease(address,uint256,bool)',
-    eventName: 'ClaimableBalanceDecrease',
-    parseEventFunction: ParseEventFunctions.parseClaimableBalanceDecreaseEventData,
-  },
-}
-
-async function getChainId(): Promise<ChainId> {
-  let network = require('hardhat').network
-  const chainId = await network.provider.request({method: 'eth_chainId'})
-  return parseInt(chainId as string)
-}
-
 export async function getLighterConfig() {
-  const chainId = await getChainId()
+  let network = require('hardhat').network
+  let chainId = await network.provider.request({method: 'eth_chainId'})
   if (!chainId) {
-    throw new Error(`ChainId ${chainId} is not supported`)
+    throw new Error(`could not fetch chainId`)
   }
+
+  chainId = parseInt(chainId as string)
 
   // assume mainnet forking is enabled for hardhat network
   if (chainId == ChainId.HARDHAT) {
