@@ -2,6 +2,7 @@ import {Provider} from '@ethersproject/providers'
 import {OrderType} from './order'
 import {BigNumber, ethers} from 'ethers'
 import {EventFragment} from '@ethersproject/abi'
+import {HardhatRuntimeEnvironment} from 'hardhat/types'
 
 export enum LighterEventType {
   CREATE_ORDER_EVENT = 'CreateOrder',
@@ -101,12 +102,14 @@ export type LighterEvent =
 
 // === Parse Events from transaction ===
 
-export const getAllLighterEvents = async (transactionHash: string, hre: any): Promise<LighterEvent[]> => {
+export const getAllLighterEvents = async (
+  transactionHash: string,
+  provider: ethers.providers.JsonRpcProvider
+): Promise<LighterEvent[]> => {
   if (!transactionHash) {
     throw new Error(`Invalid transactionHash`)
   }
 
-  const provider: Provider = hre.ethers.provider
   if (!provider || !provider._isProvider) {
     throw new Error(`Invalid provider`)
   }

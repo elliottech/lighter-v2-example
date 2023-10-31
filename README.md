@@ -35,10 +35,16 @@ A wallet that extends the Lighter protocol by providing more view methods.
 It offers methods like `getLimitOrders` and `getLimitOrdersByOwner`. 
 Inherited by the Market Making Wallet, enabling an atomic `cancelAllLimitOrders` method.
 
-# CLI
-The repository includes pre-configured Lighter and token addresses for the Arbitrum mainnet and Goerli testnet, conveniently stored in the `config` folder. 
-Additionally, a range of Hardhat tasks are provided to facilitate command-line interactions with the Lighter protocol.
-The foundation of this CLI can be expanded into a TypeScript SDK for further versatility and integration.
+# [SDK](./sdk)
+The TypeScript SDK comes with calldata compression for all contract methods and introduces features including event parsing, 
+types for on-chain view functions, like fetching Orders, and order book configurations. 
+Additionally, it comes pre-configured with all necessary addresses for integration across all supported blockchains.
+
+# [CLI](./tasks)
+The Hardhat tasks function as a Command-Line Interface (CLI) for interacting with the Lighter exchange. 
+They streamline the process of creating orders, executing swaps, and viewing active orders. 
+Each task outputs the transaction results in an easily understandable format. 
+These tasks exemplify how to utilize the SDK in your own applications.
 
 ### Usage
 Before utilizing the CLI, please ensure that you populate the `PRIVATE_KEY` environment variable within the `.env` file.
