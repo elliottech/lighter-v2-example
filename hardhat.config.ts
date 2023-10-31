@@ -1,5 +1,4 @@
 import * as dotenv from 'dotenv'
-import {ethers} from 'ethers'
 import {HardhatUserConfig} from 'hardhat/config'
 import '@nomicfoundation/hardhat-toolbox'
 import './tasks'
@@ -15,10 +14,10 @@ const config: HardhatUserConfig = {
         blockNumber: 143468900,
       },
     },
-    arbgoerli: {
-      url: process.env.ARBITRUM_GOERLI_URL
-        ? process.env.ARBITRUM_GOERLI_URL
-        : `https://rpc.goerli.arbitrum.gateway.fm/`,
+    arbsepolia: {
+      url: process.env.ARBITRUM_SEPOLIA_URL
+        ? process.env.ARBITRUM_SEPOLIA_URL
+        : `https://sepolia-rollup.arbitrum.io/rpc`,
       accounts: process.env.PRIVATE_KEY ? [process.env.PRIVATE_KEY] : [],
     },
     arb: {

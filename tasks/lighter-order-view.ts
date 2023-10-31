@@ -10,6 +10,7 @@ import {
   getOrderDetails,
   orderDataToString,
   orderToString,
+  getOrderBookConfigFromAddress,
 } from '../sdk'
 
 task('getOrderDetails')
@@ -23,10 +24,11 @@ task('getOrderDetails')
     }
     const orderBookContract = await getOrderBookAt(orderBookAddress, hre)
     const order = await getOrderDetails(orderBookContract, BigNumber.from(orderid))
+    const orderBookConfig = await getOrderBookConfigFromAddress(orderBookAddress, hre)
     if (!order) {
       console.error(`Order with id: ${orderid} doesnot exist`)
     } else {
-      console.log(`${orderToString(order)}`)
+      console.log(`${orderToString(orderBookConfig, order)}`)
     }
   })
 
@@ -41,7 +43,8 @@ task('getAllLimitOrders')
     }
     const orderBookContract = await getOrderBookAt(orderBookAddress, hre)
     const orderData: OrderData = await getAllLimitOrders(orderBookContract, BigNumber.from(0), parseInt(limit))
-    console.log(`orderData queried: ${orderDataToString(orderData)}`)
+    const orderBookConfig = await getOrderBookConfigFromAddress(orderBookAddress, hre)
+    console.log(`orderData queried: \n${orderDataToString(orderBookConfig, orderData)}`)
   })
 
 task('getAllLimitOrdersOfAnAccount')
@@ -61,5 +64,6 @@ task('getAllLimitOrdersOfAnAccount')
       BigNumber.from(0),
       parseInt(limit)
     )
-    console.log(`orderData queried: ${orderDataToString(orderData)}`)
+    const orderBookConfig = await getOrderBookConfigFromAddress(orderBookAddress, hre)
+    console.log(`orderData queried: \n${orderDataToString(orderBookConfig, orderData)}`)
   })
