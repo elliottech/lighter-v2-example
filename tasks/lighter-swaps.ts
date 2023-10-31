@@ -23,7 +23,7 @@ async function printSwapExactExecution(
 ) {
   await tx.wait()
 
-  const allEvents = await getAllLighterEvents(tx.hash, hre)
+  const allEvents = await getAllLighterEvents(tx.hash, hre.ethers.provider)
   let swapExactEvent: SwapExactAmountEvent | null = null
   for (const event of allEvents) {
     if (event.eventName == LighterEventType.SWAP_EXACT_AMOUNT_EVENT) {

@@ -15,6 +15,7 @@ export enum OrderBookKey {
 
 export enum Token {
   WETH = 'WETH',
+  USDCE = 'USDCE',
   USDC = 'USDC',
   WBTC = 'WBTC',
   WMATIC = 'WMATIC',
@@ -33,7 +34,7 @@ export enum Token {
 export enum ChainId {
   HARDHAT = 31337,
   ARBITRUM = 42161,
-  ARBITRUM_GOERLI = 421613,
+  ARBITRUM_SEPOLIA = 421614,
   OPT_GOERLI = 420,
   MUMBAI = 80001,
   BSC_TESTNET = 97,

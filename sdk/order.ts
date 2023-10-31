@@ -1,5 +1,7 @@
 import {BigNumber} from 'ethers'
 import {IOrderBook} from '../typechain-types'
+import {OrderBookConfig} from './contract'
+import {formatUnits} from 'ethers/lib/utils'
 
 export enum OrderType {
   LimitOrder,
@@ -27,34 +29,32 @@ export interface OrderData {
 }
 
 // Define a custom toString function for the Order interface
-export const orderToString = (order: Order): string => {
-  return `Order Details:
-  ID: ${order.id.toString()}
-  Is Ask: ${order.isAsk ? 'Yes' : 'No'}
-  Owner: ${order.owner}
-  Amount0: ${order.amount0.toString()}
-  Price: ${order.price.toString()}
-  Order Type: ${order.orderType}`
+export const orderToString = (orderBookConfig: OrderBookConfig, order: Order): string => {
+  return `  Owner: ${order.owner} OrderType: ${order.orderType} ID: ${order.id.toString()}
+  Amount0: ${formatUnits(order.amount0, orderBookConfig.token0Precision)} Price: ${formatUnits(
+    order.price,
+    orderBookConfig.token1Precision
+  )}`
 }
 
 // Define a custom toString function for the OrderData interface
-export const orderDataToString = (orderData: OrderData): string => {
+export const orderDataToString = (orderBookConfig: OrderBookConfig, orderData: OrderData): string => {
   const {limit, orderCount, askOrderCount, bidOrderCount, askOrders, bidOrders} = orderData
 
-  const askOrdersString = askOrders.map((order) => orderToString(order)).join('\n\n')
-  const bidOrdersString = bidOrders.map((order) => orderToString(order)).join('\n\n')
+  const askOrdersString = askOrders.map((order) => orderToString(orderBookConfig, order)).join('\n\n')
+  const bidOrdersString = bidOrders.map((order) => orderToString(orderBookConfig, order)).join('\n\n')
 
-  return `\n Order Data: \n
+  return ` Order Data:
   Limit: ${limit}
   Total Order Count: ${orderCount}
   Ask Order Count: ${askOrderCount}
   Bid Order Count: ${bidOrderCount}
 
   Ask Orders:\n
-  ${askOrdersString}
+${askOrdersString}
 
   Bid Orders:\n
-  ${bidOrdersString}`
+${bidOrdersString}`
 }
 
 export const getAllLimitOrdersOfAnAccount = async (
@@ -147,8 +147,7 @@ export const getAllLimitOrdersBySide = async (
 export const parseOrders = (isAsk: boolean, orderData: IOrderBook.OrderQueryItemStructOutput): Order[] => {
   const orders: Order[] = []
 
-  //@ts-ignore
-  for (let i = 1; i < orderData.ids.length; i++) {
+  for (let i = 0; i < orderData.ids.length; i++) {
     const id = BigNumber.from(orderData.ids[i].toString())
     const owner = orderData.owners[i].toString()
     const amount0 = BigNumber.from(orderData.amount0s[i].toString())

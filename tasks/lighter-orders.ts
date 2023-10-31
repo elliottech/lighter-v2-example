@@ -27,7 +27,7 @@ async function printCreateOrderExecution(
 ) {
   await tx.wait()
 
-  const allEvents = await getAllLighterEvents(tx.hash, hre)
+  const allEvents = await getAllLighterEvents(tx.hash, hre.ethers.provider)
   let createOrderEvent: CreateOrderEvent | null = null
   let swapEvents: SwapEvent[] = []
   for (const event of allEvents) {
@@ -152,7 +152,7 @@ async function printCancelOrderExecution(
 ) {
   await tx.wait()
 
-  const allEvents = await getAllLighterEvents(tx.hash, hre)
+  const allEvents = await getAllLighterEvents(tx.hash, hre.ethers.provider)
   let cancelOrderEvent: CancelLimitOrderEvent | null = null
   for (const event of allEvents) {
     if (event.eventName == LighterEventType.CANCEL_LIMIT_ORDER_EVENT) {
