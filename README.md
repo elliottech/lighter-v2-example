@@ -140,12 +140,12 @@ Once a limit order has been created, the funds are locked in the order book at t
 It's important to note that sending a transaction is not an atomic action, which means that the order can still be matched against until the transaction is processed and executed.
 
 ```shell
-# canceling order with id 77
-$ npx hardhat --network arbsepolia cancelOrder --orderbookname WETH-USDC --id 77
-# cancelOrder Transaction: 0xcac127fa57d40001a77e1c1b7b20f0e7c04326f8b3c448cde595ee2ec197f95b successful
-# orderId:77
+# canceling order with id 2
+$ npx hardhat --network arbsepolia cancelOrder --orderbookname WETH-USDCE --id 2
+# cancelOrder Transaction: 0xedc11def59c251627215f3d7078f1385fb9cbbcb1cc8af91c5b67c4717b2eb46 successful
+# orderId:2
 
-# order with id 76 is already executed, so there's nothing to cancel
-$ npx hardhat --network arbsepolia cancelOrder --orderbookname WETH-USDC --id 76
+# order with id 6 is already executed, so there's nothing to cancel
+$ npx hardhat --network arbsepolia cancelOrder --orderbookname WETH-USDCE --id 6
 # order already canceled or not active
 ```
