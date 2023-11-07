@@ -3,6 +3,9 @@
 Examples of integrations with Lighter v2 exchange
 
 # Contracts
+
+*Note: please be aware that these contracts are not audited. Users should employ them at their own risk.*
+
 The repository includes three sample wallets, providing a foundation for those interested in integrating with or using the Lighter exchange. 
 Alongside the contracts are tests that fork the Arbitrum mainnet for testing purposes. 
 Users have the flexibility to modify these contracts or extract the integration components for use in other contracts. 

@@ -109,7 +109,7 @@ contract MarketMakingWallet is ILighterV2TransferCallback, ViewWallet  {
     /// @dev Cancels performance limit orders in the order book.
     /// @notice Can only be called by owner.
     /// @param orderBook The address of the order book
-    function cancelAllLimitOrders(IOrderBook orderBook) public {
+    function cancelAllLimitOrders(IOrderBook orderBook) external onlyOwner {
         Order[] memory orders = getLimitOrdersByOwner(orderBook, address(this));
         for (uint256 index = 0; index < orders.length; index += 1) {
             orderBook.cancelLimitOrder(orders[index].id, address(this));

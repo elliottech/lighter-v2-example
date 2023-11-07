@@ -75,7 +75,7 @@ contract SwapWallet is ILighterV2TransferCallback {
         uint256 exactInput,
         uint256 minOutput,
         address recipient
-    ) external payable returns (uint256, uint256) {
+    ) external payable onlyOwner returns (uint256, uint256) {
         bytes memory callbackData = abi.encodePacked(orderBook.orderBookId());
 
         return orderBook.swapExactSingle(isAsk, true, exactInput, minOutput, recipient, callbackData);
@@ -96,7 +96,7 @@ contract SwapWallet is ILighterV2TransferCallback {
         uint256 exactOutput,
         uint256 maxInput,
         address recipient
-    ) external payable returns (uint256, uint256) {
+    ) external payable onlyOwner returns (uint256, uint256) {
         bytes memory callbackData = abi.encodePacked(orderBook.orderBookId());
 
         return orderBook.swapExactSingle(isAsk, false, exactOutput, maxInput, recipient, callbackData);
